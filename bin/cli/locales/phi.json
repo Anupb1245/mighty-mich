@@ -1,0 +1,5 @@
+{
+  "redis": {
+    "description": "Launch a 1-click local Redis container (Podman or Docker) for Mighty-Mich caching and quota tracking"
+  }
+}
