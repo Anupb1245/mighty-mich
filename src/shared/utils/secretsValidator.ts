@@ -43,6 +43,16 @@ const SECRET_RULES = [
     description: "HMAC secret for API key CRC generation",
     generateHint: "openssl rand -hex 32",
   },
+  {
+    name: "STORAGE_ENCRYPTION_KEY",
+    minLength: 16,
+    required: true,
+    description:
+      "AES-256-GCM key for credential encryption at rest. Without it, provider API keys " +
+      "and OAuth tokens are stored as PLAINTEXT in SQLite. Set ALLOW_PLAINTEXT_STORAGE=1 " +
+      "to explicitly accept plaintext storage (development only).",
+    generateHint: "openssl rand -base64 32",
+  },
 ];
 
 /**
@@ -67,6 +77,17 @@ export function validateSecrets(env = process.env) {
     // Missing entirely
     if (!value || value.trim() === "") {
       if (rule.required) {
+        // Explicit plaintext opt-out: encryption key may be omitted only when the
+        // operator has consciously accepted plaintext credential storage.
+        if (rule.name === "STORAGE_ENCRYPTION_KEY" && env.ALLOW_PLAINTEXT_STORAGE === "1") {
+          warnings.push({
+            name: rule.name,
+            issue:
+              "STORAGE_ENCRYPTION_KEY is not set and ALLOW_PLAINTEXT_STORAGE=1 — provider " +
+              "credentials will be stored as PLAINTEXT. Do not use this in production.",
+          });
+          continue;
+        }
         errors.push({
           name: rule.name,
           issue: `Required environment variable "${rule.name}" is not set.`,
