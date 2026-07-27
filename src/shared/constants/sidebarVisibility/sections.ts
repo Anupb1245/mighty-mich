@@ -504,6 +504,15 @@ const DEVTOOLS_ITEMS: readonly SidebarItemDefinition[] = [
     icon: "science",
   },
   {
+    id: "compare",
+    href: "/dashboard/compare",
+    i18nKey: "compare",
+    labelFallback: "Compare",
+    subtitleKey: "compareSubtitle",
+    subtitleFallback: "Side-by-side model comparison",
+    icon: "compare",
+  },
+  {
     id: "search-tools",
     href: "/dashboard/search-tools",
     i18nKey: "searchTools",

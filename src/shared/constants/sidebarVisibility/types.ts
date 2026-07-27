@@ -69,6 +69,7 @@ export const HIDEABLE_SIDEBAR_ITEM_IDS = [
   // Dev Tools
   "translator",
   "playground",
+  "compare",
   "search-tools",
   // Agentic Features
   "memory",
