@@ -392,13 +392,13 @@
     ]
   },
   "overrides": {
-    "dompurify": "^3.4.12",
+    "dompurify": "$dompurify",
     "fast-xml-parser": "^5.10.1",
     "sharp": "^0.35.0",
     "postcss": "^8.5.18",
     "ip-address": "10.2.0",
     "qs": "^6.15.2",
-    "uuid": "^14.0.0",
+    "uuid": "$uuid",
     "form-data": "^4.0.6",
     "vite": "^8.0.16",
     "protobufjs": "^7.6.3",
