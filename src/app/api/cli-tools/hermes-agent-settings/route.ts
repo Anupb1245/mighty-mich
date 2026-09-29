@@ -7,7 +7,9 @@ import { getCliPrimaryConfigPath } from "@/shared/services/cliRuntime";
 import { validateBaseUrl } from "@/lib/cli-helper/config-generator";
 import {
   generateHermesAgentConfig,
+  generateHermesAgentEnv,
   getCurrentHermesAgentRoles,
+  writeHermesAgentEnv,
 } from "@/lib/cli-helper/config-generator/hermes-agent";
 import { getHermesConfigPath } from "@/lib/cli-helper/config-generator/hermesHome";
 import { sanitizeErrorMessage } from "@omniroute/open-sse/utils/error.ts";
@@ -33,6 +35,9 @@ const hermesAgentSettingsSchema = z.object({
  *
  * GET  -> returns current per-role configuration (default, delegation, auxiliary.*)
  * POST -> accepts { baseUrl, keyId?, apiKey?, selections: [{role, model}, ...] }
+ *         Writes config.yaml AND merges the key into <HERMES_HOME>/.env — Hermes
+ *         resolves its inference provider from the env file, so config.yaml alone
+ *         leaves it failing with "No inference provider configured".
  */
 
 // Resolved lazily so HERMES_HOME is always honoured (#3628).
@@ -112,17 +117,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  // Preview mode: return the would-be YAML without writing it (Phase 5 polish)
+  // Preview mode: return the would-be YAML (and .env fragment) without writing (Phase 5 polish)
   if (preview === true) {
     return NextResponse.json({
       success: true,
       preview: true,
       yaml: result.yaml,
+      env: apiKey ? generateHermesAgentEnv({ baseUrl, apiKey }) : null,
       configPath,
     });
   }
 
   await fs.writeFile(configPath, result.yaml, "utf-8");
+
+  // Persist the key where Hermes actually looks for it. No-op without a real key.
+  const envPath = await writeHermesAgentEnv({ baseUrl, apiKey });
 
   // Record first setup time if this is the first save via OmniRoute
   const metaPath = getMetadataPath(configPath);
@@ -138,7 +147,10 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     success: true,
-    message: `Hermes Agent config saved to ${configPath}`,
+    message: envPath
+      ? `Hermes Agent config saved to ${configPath} (API key written to ${envPath})`
+      : `Hermes Agent config saved to ${configPath}`,
     configPath,
+    envPath,
   });
 }

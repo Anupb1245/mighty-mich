@@ -27,7 +27,7 @@
  */
 
 import * as yaml from "js-yaml";
-import { getHermesConfigPath } from "./hermesHome.ts";
+import { getHermesConfigPath, getHermesEnvPath } from "./hermesHome.ts";
 
 export const HERMES_AGENT_ROLES = [
   { id: "default", label: "Default (main)", description: "Primary conversation model" },
@@ -87,6 +87,10 @@ export interface HermesAgentConfigPayload {
 // Resolved lazily at call-time so HERMES_HOME is always honoured (#3628).
 const getConfigPath = () => getHermesConfigPath();
 
+// Placeholder written into config.yaml when the caller supplies no key. Never
+// persist it to .env — Hermes would then try to authenticate with it.
+const API_KEY_PLACEHOLDER = "YOUR_OMNIROUTE_API_KEY_HERE";
+
 // Build a normalized base URL for Hermes (no trailing slash, no /v1 suffix on the provider entry)
 function normalizeBaseUrl(base: string): string {
   let b = base.trim();
@@ -119,7 +123,7 @@ export async function generateHermesAgentConfig(
   }
 
   // Resolve the actual key to use (in real impl we would look up keyId)
-  const resolvedKey = apiKey || "YOUR_OMNIROUTE_API_KEY_HERE";
+  const resolvedKey = apiKey || API_KEY_PLACEHOLDER;
 
   // Read existing config if present (non-destructive merge)
   let existing: any = {};
@@ -234,4 +238,122 @@ export async function getCurrentHermesAgentRoles(): Promise<
   }
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// .env persistence
+//
+// Hermes Agent resolves its inference provider from API keys in
+// `<HERMES_HOME>/.env` (`OPENAI_API_KEY`, `OPENROUTER_API_KEY`, ...). The
+// `providers.omniroute.api_key` entry in config.yaml alone is not enough — with
+// only config.yaml written, `hermes` aborts at startup with
+// "No inference provider configured ... set an API key ... in ~/.hermes/.env".
+//
+// OmniRoute is an OpenAI-compatible endpoint, so the key is exposed as
+// `OPENAI_API_KEY` together with `OPENAI_BASE_URL` pointing at OmniRoute's /v1.
+// ---------------------------------------------------------------------------
+
+const ENV_KEY_RE = /^[A-Z_][A-Z0-9_]*$/;
+
+function formatEnvValue(value: string): string {
+  // Quote when the value could be misparsed by a dotenv reader.
+  if (value === "" || /[\s#"'`$\\]/.test(value)) {
+    return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+  }
+  return value;
+}
+
+/**
+ * Upsert `vars` into dotenv-formatted `existing` text.
+ *
+ * - An existing `KEY=` / `export KEY=` line is rewritten in place (its `export`
+ *   prefix is kept); every other line — comments, blanks, unrelated keys — is
+ *   preserved verbatim.
+ * - Keys not yet present are appended at the end, in the order given.
+ * - The result always ends with a single trailing newline.
+ */
+export function upsertHermesEnv(existing: string, vars: Record<string, string>): string {
+  for (const key of Object.keys(vars)) {
+    if (!ENV_KEY_RE.test(key)) throw new Error(`Invalid env var name: ${key}`);
+  }
+
+  const lines = existing.length ? existing.replace(/\r\n/g, "\n").split("\n") : [];
+  // A trailing newline yields an empty last element — drop it so we don't emit a blank line.
+  if (lines.length && lines[lines.length - 1] === "") lines.pop();
+
+  const remaining = new Map(Object.entries(vars));
+  const out = lines.map((line) => {
+    const m = line.match(/^(\s*(?:export\s+)?)([A-Za-z_][A-Za-z0-9_]*)\s*=/);
+    if (!m) return line;
+    const key = m[2];
+    if (!remaining.has(key)) return line;
+    const value = remaining.get(key) as string;
+    remaining.delete(key);
+    return `${m[1]}${key}=${formatEnvValue(value)}`;
+  });
+
+  for (const [key, value] of remaining) {
+    out.push(`${key}=${formatEnvValue(value)}`);
+  }
+
+  return out.length ? `${out.join("\n")}\n` : "";
+}
+
+/** The env vars OmniRoute contributes to the Hermes `.env`. */
+export function buildHermesAgentEnvVars(payload: {
+  baseUrl: string;
+  apiKey: string;
+}): Record<string, string> {
+  return {
+    OPENAI_API_KEY: payload.apiKey,
+    OPENAI_BASE_URL: `${normalizeBaseUrl(payload.baseUrl)}/v1`,
+  };
+}
+
+/** Render the `.env` fragment OmniRoute would write (used for previews). */
+export function generateHermesAgentEnv(payload: { baseUrl: string; apiKey: string }): string {
+  return upsertHermesEnv("", buildHermesAgentEnvVars(payload));
+}
+
+function hasRealApiKey(apiKey: string | null | undefined): apiKey is string {
+  const k = (apiKey || "").trim();
+  return k.length > 0 && k !== API_KEY_PLACEHOLDER;
+}
+
+/**
+ * Merge the OmniRoute key + base URL into `<HERMES_HOME>/.env`, creating the
+ * file (owner-only, 0600) when absent and preserving any other entries.
+ *
+ * Returns the written path, or `null` when there is no real key to persist
+ * (empty / placeholder) — in that case the file is left untouched.
+ */
+export async function writeHermesAgentEnv(payload: {
+  baseUrl: string;
+  apiKey?: string | null;
+}): Promise<string | null> {
+  if (!hasRealApiKey(payload.apiKey)) return null;
+
+  const fs = await import("node:fs/promises");
+  const path = await import("node:path");
+  const envPath = getHermesEnvPath();
+
+  let existing = "";
+  try {
+    existing = await fs.readFile(envPath, "utf-8");
+  } catch {
+    // no .env yet — start fresh
+  }
+
+  const next = upsertHermesEnv(
+    existing,
+    buildHermesAgentEnvVars({ baseUrl: payload.baseUrl, apiKey: payload.apiKey })
+  );
+
+  await fs.mkdir(path.dirname(envPath), { recursive: true });
+  await fs.writeFile(envPath, next, { encoding: "utf-8", mode: 0o600 });
+  // writeFile's `mode` only applies on creation; enforce it for pre-existing files too.
+  if (process.platform !== "win32") {
+    await fs.chmod(envPath, 0o600);
+  }
+  return envPath;
 }

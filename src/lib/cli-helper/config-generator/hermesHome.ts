@@ -38,3 +38,14 @@ export function getHermesHome(): string {
 export function getHermesConfigPath(): string {
   return path.join(getHermesHome(), "config.yaml");
 }
+
+/**
+ * Returns the path to the Hermes Agent `.env` file (`<HERMES_HOME>/.env`).
+ *
+ * Hermes resolves its inference provider from API keys in this file
+ * (`OPENAI_API_KEY`, `OPENROUTER_API_KEY`, ...), not from the `providers:`
+ * map in config.yaml — so the OmniRoute key must land here as well.
+ */
+export function getHermesEnvPath(): string {
+  return path.join(getHermesHome(), ".env");
+}

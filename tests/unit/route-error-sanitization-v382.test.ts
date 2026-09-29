@@ -87,3 +87,18 @@ test("copilot chat route requires management auth and sanitizes thrown errors", 
   assert.match(src, /sanitizeErrorMessage\(error\)/, "catch blocks must sanitize errors");
   assert.ok(!/error\.message/.test(src), "must not return raw error.message");
 });
+
+test("hermes-agent-settings POST also persists the key to <HERMES_HOME>/.env (not on preview)", () => {
+  // Hermes resolves its inference provider from ~/.hermes/.env, so writing only
+  // config.yaml leaves it failing with "No inference provider configured".
+  const src = readRoute(HERMES);
+  assert.match(src, /writeHermesAgentEnv,?\n/, "must import writeHermesAgentEnv");
+  assert.match(src, /generateHermesAgentEnv,?\n/, "must import generateHermesAgentEnv");
+  const writeYamlIdx = src.indexOf("await fs.writeFile(configPath, result.yaml");
+  const writeEnvIdx = src.indexOf("await writeHermesAgentEnv({ baseUrl, apiKey })");
+  const previewIdx = src.indexOf("if (preview === true)");
+  assert.ok(writeYamlIdx > 0 && writeEnvIdx > 0 && previewIdx > 0);
+  assert.ok(previewIdx < writeYamlIdx, "preview must return before any write");
+  assert.ok(writeEnvIdx > writeYamlIdx, ".env must be written after config.yaml is saved");
+  assert.match(src, /envPath,\n\s*\}\);/, "response must expose envPath");
+});
