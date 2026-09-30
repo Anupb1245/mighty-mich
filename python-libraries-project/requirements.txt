@@ -1,0 +1,11 @@
+numpy
+pandas
+matplotlib
+seaborn
+scipy
+scikit-learn
+requests
+beautifulsoup4
+Pillow
+rich
+sympy
