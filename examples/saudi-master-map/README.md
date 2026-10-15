@@ -5,6 +5,11 @@ city boundaries, every named district / neighbourhood, and the major road networ
 
 ## Run
 
+**Google Colab (no install needed):** open `saudi_master_map_colab.ipynb` in Colab and
+`Runtime ▸ Run all`. It builds the map, shows it inline and downloads a zip with all outputs.
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Anupb1245/mighty-mich/blob/claude/festive-hypatia-l5sdmp/examples/saudi-master-map/saudi_master_map_colab.ipynb)
+
 Jupyter: open `saudi_master_map.ipynb` and run all cells.
 
 Terminal:
