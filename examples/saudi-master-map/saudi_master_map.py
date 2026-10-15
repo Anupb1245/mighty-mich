@@ -35,6 +35,17 @@ import math
 import time
 from pathlib import Path
 
+# ── auto-install (works in Colab, Jupyter and plain Python; no-op if present) ──
+import importlib.util
+import subprocess
+import sys
+
+_missing = [pkg for mod, pkg in (("osmnx", "osmnx"), ("folium", "folium"), ("geopandas", "geopandas"))
+            if importlib.util.find_spec(mod) is None]
+if _missing:
+    print("Installing", ", ".join(_missing), "…", flush=True)
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", *_missing])
+
 import folium
 import geopandas as gpd
 import osmnx as ox
