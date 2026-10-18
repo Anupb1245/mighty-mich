@@ -29,6 +29,16 @@ function render(): string {
   );
 }
 
+/** React escapes text children; mirror that for plain-text assertions. */
+function esc(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 function cardHtml(html: string, id: string): string {
   const start = html.indexOf(`data-brand-id="${id}"`);
   assert.ok(start >= 0, `card for ${id} rendered`);
@@ -41,8 +51,8 @@ test("renders one card per brand with its name and category", () => {
   assert.equal(html.match(/data-brand-id="/g)?.length, TROFI_BRANDS.length);
   for (const b of TROFI_BRANDS) {
     const card = cardHtml(html, b.id);
-    assert.ok(card.includes(b.name), `${b.id}: name`);
-    assert.ok(card.includes(b.category), `${b.id}: category`);
+    assert.ok(card.includes(esc(b.name)), `${b.id}: name`);
+    assert.ok(card.includes(esc(b.category)), `${b.id}: category`);
   }
 });
 
