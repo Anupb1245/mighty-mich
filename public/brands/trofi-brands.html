@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TROFI Brands</title>
+    <meta
+      name="description"
+      content="TROFI brand portfolio gallery: every brand with its verified official link."
+    />
+    <style>
+      :root {
+        --bg: #0b0e14;
+        --panel: #111520;
+        --line: #2d333b;
+        --text: #fff;
+        --muted: #9aa3b2;
+        --dim: #6b7280;
+        --accent: #e54d5e;
+        --tile: #f3efe8;
+        --tile-text: #2b2117;
+        --tile-sub: #6b5c4a;
+        --tile-line: #d9cdbe;
+        --tile-dim: #8a7a66;
+      }
+      :root[data-theme="light"] {
+        --bg: #f7f7f9;
+        --panel: #fff;
+        --line: #e3e6eb;
+        --text: #111827;
+        --muted: #4b5563;
+        --dim: #6b7280;
+      }
+      @media (prefers-color-scheme: light) {
+        :root:not([data-theme="dark"]) {
+          --bg: #f7f7f9;
+          --panel: #fff;
+          --line: #e3e6eb;
+          --text: #111827;
+          --muted: #4b5563;
+          --dim: #6b7280;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 56px 16px;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-bottom: 40px;
+      }
+      .eyebrow {
+        margin: 0 0 10px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 40px);
+        line-height: 1.1;
+        overflow-wrap: anywhere;
+      }
+      .sub {
+        margin: 14px 0 0;
+        max-width: 640px;
+        font-size: 17px;
+        color: var(--muted);
+      }
+      .ref {
+        color: var(--muted);
+        font-size: 14px;
+        text-decoration: none;
+      }
+      .ref:hover {
+        color: var(--text);
+      }
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 20px;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 640px) {
+        ul {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (min-width: 1024px) {
+        ul {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      @media (min-width: 1280px) {
+        ul {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      li {
+        min-width: 0;
+      }
+      .card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        transition:
+          transform 0.3s,
+          border-color 0.3s,
+          box-shadow 0.3s;
+      }
+      .card:hover,
+      .card:focus-within {
+        transform: translateY(-4px);
+        border-color: rgba(229, 77, 94, 0.6);
+        box-shadow: 0 12px 40px rgba(229, 77, 94, 0.18);
+      }
+      .primary {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        color: inherit;
+        text-decoration: none;
+        outline: none;
+      }
+      .primary::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+      }
+      a.primary:focus-visible {
+        box-shadow: inset 0 0 0 2px var(--accent);
+      }
+      .media {
+        position: relative;
+        aspect-ratio: 4/5;
+        width: 100%;
+        overflow: hidden;
+        background: var(--tile);
+      }
+      .media img,
+      .tile {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.5s ease-out;
+      }
+      .media img {
+        object-fit: cover;
+      }
+      .card:hover .media img,
+      .card:hover .tile {
+        transform: scale(1.05);
+      }
+      .tile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 16px;
+        text-align: center;
+      }
+      .tile-name {
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--tile-text);
+      }
+      .tile-native {
+        font-size: 16px;
+        color: var(--tile-sub);
+      }
+      .tile-pending {
+        margin-top: 8px;
+        border: 1px solid var(--tile-line);
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--tile-dim);
+      }
+      .body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 4px;
+        padding: 16px;
+      }
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.2;
+        transition: color 0.2s;
+      }
+      .card:hover h3 {
+        color: var(--accent);
+      }
+      .native {
+        margin: 0;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .category {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      .location {
+        margin: 0;
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .desc {
+        margin: 8px 0 0;
+        font-size: 14px;
+        color: var(--muted);
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .foot {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        border-top: 1px solid var(--line);
+        padding: 12px 16px;
+      }
+      .host {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .unavailable {
+        color: #fbbf24;
+      }
+      .pill {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-size: 11px;
+        color: var(--muted);
+        text-decoration: none;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+      }
+      .pill:hover {
+        border-color: rgba(229, 77, 94, 0.6);
+        color: var(--text);
+      }
+      .pill:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      footer {
+        margin-top: 48px;
+        font-size: 12px;
+        color: var(--dim);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <header>
+        <div>
+          <p class="eyebrow">TROFI Brands</p>
+          <h1>A portfolio of unique F&amp;B brands</h1>
+          <p class="sub">
+            Developed, acquired and operated by TROFI across Riyadh, Kuwait, London and beyond.
+            Select a brand to open its official page.
+          </p>
+        </div>
+        <a class="ref" href="https://www.troficorp.com/" target="_blank" rel="noopener noreferrer"
+          >Reference: troficorp.com ↗</a
+        >
+      </header>
+      <ul aria-label="TROFI Brands">
+        <li>
+          <article class="card" data-brand-id="bait-mubarak">
+            <a
+              class="primary"
+              href="https://www.troficorp.com/ourstory"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit Bait Mubarak (opens in a new tab)"
+              ><div class="media">
+                <img
+                  src="data:image/webp;base64,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"
+                  alt="Bait Mubarak: a traditional Najdi mud-brick building with a decorated wooden gate and the Bait Mubarak logo"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+              <div class="body">
+                <h3>Bait Mubarak</h3>
+                <p class="native" dir="rtl" lang="ar">بيت مبارك</p>
+                <p class="category">Saudi heritage dining</p>
+                <p class="location">Riyadh</p>
+                <p class="desc">
+                  The group's origin: a traditional Najdi mud-brick house serving Saudi cuisine,
+                  founded by Tariq Altuwaijri.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🏬</span> troficorp.com ↗</span>
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="gunbun">
+            <a
+              class="primary"
+              href="https://www.instagram.com/gunbun.ksa/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit GUNBUN (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">GUNBUN</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>GUNBUN</h3>
+
+                <p class="category">Josper-grilled burgers</p>
+                <p class="location">Riyadh</p>
+                <p class="desc">
+                  Expert chefs and a Josper oven deliver rich, grill-inspired burgers on sourdough
+                  buns. 2023 Best Recommended Burger in Riyadh.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">📷</span> instagram.com ↗</span>
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="chestnut">
+            <a
+              class="primary"
+              href="https://www.chestnutbakery.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit Chestnut Bakery (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">Chestnut Bakery</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>Chestnut Bakery</h3>
+
+                <p class="category">Artisan bakery</p>
+                <p class="location">London · Riyadh</p>
+                <p class="desc">
+                  Revives the golden age of breadmaking; winner of Time Out Riyadh's 2023 Bakery
+                  &amp; Patisserie award and the first Best Croissant UK award.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🌐</span> chestnutbakery.com ↗</span
+              ><a
+                class="pill"
+                href="https://www.instagram.com/chestnut.bakery/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Official social page"
+                aria-label="Chestnut Bakery: Official social page (opens in a new tab)"
+                ><span aria-hidden="true">📷</span> instagram.com</a
+              >
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="habra">
+            <a
+              class="primary"
+              href="https://habra.sa/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit Habra (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">Habra</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>Habra</h3>
+
+                <p class="category">Beef canteen &amp; steakhouse</p>
+                <p class="location">Riyadh · Kuwait</p>
+                <p class="desc">
+                  A beef canteen by Chef Ahmed Al Bader, named for &quot;the best cut&quot; and
+                  built around top-quality meats.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🌐</span> habra.sa ↗</span
+              ><a
+                class="pill"
+                href="https://www.instagram.com/habraksa/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Official social page"
+                aria-label="Habra: Official social page (opens in a new tab)"
+                ><span aria-hidden="true">📷</span> instagram.com</a
+              >
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="lunch-room">
+            <a
+              class="primary"
+              href="https://www.troficorp.com/lunchroom"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit Lunch Room (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">Lunch Room</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>Lunch Room</h3>
+
+                <p class="category">All-day dining</p>
+                <p class="location">Riyadh</p>
+                <p class="desc">
+                  An all-day dining concept by Chef Ahmed Al Bader that celebrates lunch as a pause
+                  and ritual, extended into breakfast, brunch and dinner.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🏬</span> troficorp.com ↗</span
+              ><a
+                class="pill"
+                href="https://www.lunchroom.sa/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Official website"
+                aria-label="Lunch Room: Official website (opens in a new tab)"
+                ><span aria-hidden="true">🌐</span> lunchroom.sa</a
+              ><a
+                class="pill"
+                href="https://www.instagram.com/lunchroomksa/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Official social page"
+                aria-label="Lunch Room: Official social page (opens in a new tab)"
+                ><span aria-hidden="true">📷</span> instagram.com</a
+              >
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="fairuz-garden">
+            <a
+              class="primary"
+              href="https://www.instagram.com/fairuzgarden/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit Fairuz Garden (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">Fairuz Garden</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>Fairuz Garden</h3>
+
+                <p class="category">Mediterranean cloud kitchen</p>
+                <p class="location">Riyadh · Jeddah</p>
+                <p class="desc">
+                  A Mediterranean-inspired cloud kitchen offering refined bite-sized delights made
+                  for gatherings.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">📷</span> instagram.com ↗</span>
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="nagwa">
+            <a
+              class="primary"
+              href="https://www.troficorp.com/nagwa"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit Nagwa (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">Nagwa</span
+                  ><span class="tile-native" dir="rtl" lang="ar">نقوة</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>Nagwa</h3>
+
+                <p class="category">Kuwaiti sweets &amp; gifting</p>
+                <p class="location">Kuwait · Riyadh</p>
+                <p class="desc">
+                  Started in 2004 from a personal need to gift local Kuwaiti sweets abroad; known
+                  for its food-gifting focus and packaging.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🏬</span> troficorp.com ↗</span
+              ><a
+                class="pill"
+                href="https://www.nagwaboutique.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Official website"
+                aria-label="Nagwa: Official website (opens in a new tab)"
+                ><span aria-hidden="true">🌐</span> nagwaboutique.com</a
+              >
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="woop">
+            <a
+              class="primary"
+              href="https://www.troficorp.com/woop"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit WOOP! (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">WOOP!</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>WOOP!</h3>
+
+                <p class="category">Juice bar &amp; café</p>
+                <p class="location">Kuwait · Saudi Arabia</p>
+                <p class="desc">
+                  Fresh smoothies, fruit juices, soft-serve and waffles; TROFI reports WOOP forging
+                  new trends in Saudi Arabia.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🏬</span> troficorp.com ↗</span
+              ><a
+                class="pill"
+                href="https://www.instagram.com/woop.kw/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Official social page"
+                aria-label="WOOP!: Official social page (opens in a new tab)"
+                ><span aria-hidden="true">📷</span> instagram.com</a
+              >
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="the-gentlemen-baristas">
+            <a
+              class="primary"
+              href="https://www.thegentlemenbaristas.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit The Gentlemen Baristas (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">The Gentlemen Baristas</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>The Gentlemen Baristas</h3>
+
+                <p class="category">Specialty coffee</p>
+                <p class="location">London</p>
+                <p class="desc">
+                  Specialty coffee houses and roastery serving London since 2014; featured as
+                  &quot;Local Heroes&quot; by The Sunday Times.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"
+                ><span aria-hidden="true">🌐</span> thegentlemenbaristas.com ↗</span
+              >
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="over-jar">
+            <a
+              class="primary"
+              href="https://www.troficorp.com/overjar"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit Over Jar (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">Over Jar</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>Over Jar</h3>
+
+                <p class="category">Belgian chocolate concept</p>
+                <p class="location">Riyadh</p>
+                <p class="desc">
+                  A chocolate concept that triggers your five senses with pure melted Belgian
+                  chocolate.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🏬</span> troficorp.com ↗</span
+              ><a
+                class="pill"
+                href="https://www.instagram.com/overjarksa/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Official social page"
+                aria-label="Over Jar: Official social page (opens in a new tab)"
+                ><span aria-hidden="true">📷</span> instagram.com</a
+              >
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="the-levant-bakery">
+            <a
+              class="primary"
+              href="https://www.troficorp.com/thelevantbakery"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit The Levant Bakery (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">The Levant Bakery</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>The Levant Bakery</h3>
+
+                <p class="category">Middle-Eastern bakery</p>
+                <p class="location">Riyadh</p>
+                <p class="desc">Established in 2022 as a Middle-Eastern bakery.</p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🏬</span> troficorp.com ↗</span>
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="almajlis-alkhaleeji">
+            <a
+              class="primary"
+              href="https://www.troficorp.com/almajlisalkhaleeji"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit Almajlis Alkhaleeji (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">Almajlis Alkhaleeji</span
+                  ><span class="tile-native" dir="rtl" lang="ar">المجلس الخليجي</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>Almajlis Alkhaleeji</h3>
+
+                <p class="category">Pan-Arabic Gulf cuisine</p>
+                <p class="location">Riyadh</p>
+                <p class="desc">
+                  Authentic menus from Saudi Arabia, Kuwait, Oman, Bahrain and the UAE in an
+                  upscale-casual Gulf majlis setting.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🏬</span> troficorp.com ↗</span
+              ><a
+                class="pill"
+                href="https://www.almajles.sa/en"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Official website"
+                aria-label="Almajlis Alkhaleeji: Official website (opens in a new tab)"
+                ><span aria-hidden="true">🌐</span> almajles.sa</a
+              ><a
+                class="pill"
+                href="https://www.instagram.com/almajlis_alkhaleeji/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Official social page"
+                aria-label="Almajlis Alkhaleeji: Official social page (opens in a new tab)"
+                ><span aria-hidden="true">📷</span> instagram.com</a
+              >
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="century-burger">
+            <a
+              class="primary"
+              href="https://www.centuryburger.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit Century Burger (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">Century Burger</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>Century Burger</h3>
+
+                <p class="category">Handcrafted burgers since 2011</p>
+                <p class="location">Jeddah · Riyadh · Taif · Makkah · Qassim</p>
+                <p class="desc">
+                  Saudi Arabia's first handcrafted burger joint, built on freshly minced patties and
+                  house-baked buns.
+                </p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🌐</span> centuryburger.com ↗</span
+              ><a
+                class="pill"
+                href="https://www.instagram.com/centuryburger/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Official social page"
+                aria-label="Century Burger: Official social page (opens in a new tab)"
+                ><span aria-hidden="true">📷</span> instagram.com</a
+              >
+            </div>
+          </article>
+        </li>
+        <li>
+          <article class="card" data-brand-id="one-of">
+            <a
+              class="primary"
+              href="https://www.troficorp.com/oneof"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit One Of (opens in a new tab)"
+              ><div class="media">
+                <div class="tile" aria-hidden="true">
+                  <span class="tile-name">One Of</span
+                  ><span class="tile-pending">Brand image pending</span>
+                </div>
+              </div>
+              <div class="body">
+                <h3>One Of</h3>
+
+                <p class="category">Burger delivery concept</p>
+                <p class="location">Riyadh</p>
+                <p class="desc">A delivery concept built around one-of-a-kind burgers.</p>
+              </div></a
+            >
+            <div class="foot">
+              <span class="host"><span aria-hidden="true">🏬</span> troficorp.com ↗</span>
+            </div>
+          </article>
+        </li>
+      </ul>
+      <footer>
+        Brand names, descriptions and links belong to their respective owners. Links open in a new
+        tab.
+      </footer>
+    </main>
+  </body>
+</html>
