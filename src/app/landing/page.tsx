@@ -6,6 +6,7 @@ import HeroSection from "./components/HeroSection";
 import FlowAnimation from "./components/FlowAnimation";
 import HowItWorks from "./components/HowItWorks";
 import Features from "./components/Features";
+import TrofiBrands from "./components/TrofiBrands";
 import GetStarted from "./components/GetStarted";
 import Footer from "./components/Footer";
 
@@ -61,6 +62,7 @@ export default function LandingPage() {
           <GetStarted />
           <HowItWorks />
           <Features />
+          <TrofiBrands />
 
           {/* CTA Section */}
           <section className="py-24 sm:py-32 px-4 sm:px-6 relative overflow-hidden">

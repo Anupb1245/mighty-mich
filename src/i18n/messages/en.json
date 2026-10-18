@@ -9058,7 +9058,21 @@
     "ctaTitle": "Ready to Simplify Your AI Infrastructure?",
     "ctaDescription": "Join developers who are streamlining their AI integrations with Mighty-Mich. Open source and free to start.",
     "startFree": "Start Free",
-    "readDocumentation": "Read Documentation"
+    "readDocumentation": "Read Documentation",
+    "brandsLink": "Brands",
+    "brandsEyebrow": "TROFI Brands",
+    "brandsTitle": "A portfolio of unique F&B brands",
+    "brandsSubtitle": "Developed, acquired and operated by TROFI across Riyadh, Kuwait, London and beyond. Select a brand to open its official page.",
+    "brandsSource": "Reference: troficorp.com",
+    "brandsVisit": "Visit {name}",
+    "brandsOpensNewTab": "opens in a new tab",
+    "brandsLinkUnavailable": "Official link not yet verified",
+    "brandsImagePending": "Brand image pending",
+    "brandsKindTrofiPage": "Brand page on TROFI",
+    "brandsKindOfficialSite": "Official website",
+    "brandsKindSocial": "Official social page",
+    "brandsPageTitle": "TROFI Brands",
+    "brandsBackToHome": "Back to home"
   },
   "docs": {
     "title": "Documentation",

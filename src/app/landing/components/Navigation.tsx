@@ -42,6 +42,12 @@ export default function Navigation() {
           >
             {t("howItWorks")}
           </a>
+          <a
+            className="text-gray-300 hover:text-white text-sm font-medium transition-colors"
+            href="#brands"
+          >
+            {t("brandsLink")}
+          </a>
           <Link
             className="text-gray-300 hover:text-white text-sm font-medium transition-colors"
             href="/docs"
@@ -98,6 +104,13 @@ export default function Navigation() {
               onClick={() => setMobileMenuOpen(false)}
             >
               {t("howItWorks")}
+            </a>
+            <a
+              className="text-gray-300 hover:text-white text-sm font-medium transition-colors"
+              href="#brands"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {t("brandsLink")}
             </a>
             <Link
               className="text-gray-300 hover:text-white text-sm font-medium transition-colors"
