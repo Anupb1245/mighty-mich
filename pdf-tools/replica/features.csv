@@ -1,0 +1,37 @@
+feature,area,priority,original,clone,notes
+Home page with tool grid,home,must,yes,yes,S01
+All-tools catalogue grouped by category,home,should,yes,yes,S02
+Tool page with drag-and-drop + choose files,tool,must,yes,yes,S03; also paste? no
+Reject non-PDF / wrong type with message,tool,must,yes,yes,
+Merge PDFs with file reordering,organize,must,yes,yes,F01
+Split: extract selected pages,organize,must,yes,yes,F03
+Split: every page / by ranges into separate files (ZIP),organize,must,yes,yes,F03
+Rotate pages (per page and all),organize,must,yes,yes,F04
+Delete pages,organize,must,yes,yes,F04
+Reorder pages by drag,organize,should,yes,yes,F04
+Page thumbnails,tool,must,yes,yes,S04
+Compress PDF (basic),convert,must,yes,yes,F02; browser-only means image downsampling
+Compress PDF (strong),convert,should,yes (Pro),yes,
+Show size before/after,convert,must,yes,yes,S06
+JPG/PNG to PDF with page size and orientation,convert,must,yes,yes,F05
+PDF to JPG (pages as images in a ZIP),convert,must,yes,yes,F06
+Protect PDF with password,security,must,yes,yes,F07
+Unlock PDF (remove password you know),security,should,yes,yes,F07
+Number pages with position and start,edit,should,yes,yes,F08
+Add watermark text,edit,could,yes,yes,
+Flatten PDF,security,could,yes,yes,
+Continue to another tool with the result,tool,should,yes,yes,F09
+Download single file or ZIP,tool,must,yes,yes,S06
+Progress and error states with retry,tool,must,yes,yes,S05
+How-to steps and FAQ per tool,tool,should,yes,yes,S03
+Related tools on tool page,tool,could,yes,yes,S03
+Mobile layout,home,must,yes,yes,
+Keyboard and screen-reader accessible,tool,should,partial,partial,
+Cloud import (Drive/Dropbox),tool,could,yes,no,needs their OAuth apps
+Word/Excel/PPT to PDF,convert,skip,yes,skip,server office engine
+PDF to Word/Excel/PPT,convert,skip,yes,skip,server office engine
+OCR,convert,skip,yes,skip,server
+AI summarize / chat / translate,ai,skip,yes,skip,server
+eSign,security,skip,yes,skip,regulated + server
+Accounts and daily task limit,account,skip,yes,skip,clone has no accounts and no limits on purpose
+Pricing and subscription,account,skip,yes,skip,clone is free and local-only

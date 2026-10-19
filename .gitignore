@@ -250,3 +250,12 @@ tests/homolog/.auth/
 tests/homolog/ui/.auth/
 homolog-report/
 docker-compose.yml.bak
+
+# Replica skill pack (project-local Claude Code skills, MIT — github.com/Jakeschincariol/replica-skill).
+# Tracked on purpose so every checkout gets /replica-recon, /replica-build, etc.
+# Re-includes only the replica-* folders; everything else under .claude/ stays ignored.
+!.claude/
+!.claude/skills/
+!.claude/skills/replica-*
+!.claude/skills/replica-*/**
+.claude/skills/replica-*/__pycache__/

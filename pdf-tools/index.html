@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inkfold — PDF tools that never leave your device</title>
+  <meta name="description" content="Merge, split, compress, protect and convert PDFs in your browser. No upload, no account, no daily limit. Free and open source." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <div class="nav"><div class="wrap"></div></div>
+
+  <main>
+    <section class="hero wrap">
+      <div class="pill"><span class="dot"></span> Runs 100% in your browser</div>
+      <h1>PDF tools that never leave your device.</h1>
+      <p class="lead">Merge, split, compress, protect and convert PDFs right here. No upload, no account, no daily limit, no subscription. Close the tab and nothing is left behind.</p>
+      <div class="section" style="padding-top:8px">
+        <div data-grid="popular"></div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="tools">
+      <div class="section-head"><h2>All <span data-tool-count>14</span> tools</h2><a href="tools.html">See the catalogue</a></div>
+      <div data-grid="all"></div>
+    </section>
+
+    <section class="section wrap">
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><h3>Pick a tool</h3><p class="muted">Merge, split, compress, protect, number, watermark, convert.</p></div>
+        <div class="step"><div class="n">2</div><h3>Drop your file</h3><p class="muted">It is opened by your browser. It is never sent to a server.</p></div>
+        <div class="step"><div class="n">3</div><h3>Download</h3><p class="muted">Keep going with another tool on the result, or start over.</p></div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="why">
+      <div class="why">
+        <div>
+          <h2>Why local, not cloud?</h2>
+          <p class="muted">Most online PDF sites upload your file, run it on their servers and promise to delete it in an hour. Contracts, medical records, pay slips: that is a lot of trust for a merge.</p>
+          <p class="muted">Inkfold does the work with the PDF engine already inside your browser. Your file stays in your tab's memory and is gone when you close it.</p>
+        </div>
+        <ul>
+          <li><b>No upload.</b> Works offline once the page is loaded.</li>
+          <li><b>No account, no limit.</b> Not two tasks a day. As many as you like.</li>
+          <li><b>No subscription.</b> Nothing to cancel, nothing to forget.</li>
+          <li><b>No tracking.</b> No cookies, no analytics, no third-party scripts.</li>
+          <li><b>Open source.</b> MIT licensed. Host it on your own domain.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section wrap faq">
+      <h2>Questions</h2>
+      <details><summary>Is it really free?</summary><p>Yes. There is no paid tier, because there is no server to pay for. The work happens on your device.</p></details>
+      <details><summary>How big a file can I use?</summary><p>There is no hard limit. Files over a couple of hundred megabytes can be slow because everything happens in the browser's memory.</p></details>
+      <details><summary>What about Word, Excel and PowerPoint?</summary><p>Converting Office files properly needs an Office engine, which does not fit in a browser. Inkfold sticks to what it can do well locally: everything PDF, plus images.</p></details>
+      <details><summary>Does compression keep my text selectable?</summary><p>Yes, for the Recommended and Strong levels: they shrink the images inside the PDF and leave the text alone. Only the Maximum level turns pages into pictures.</p></details>
+      <details><summary>Can it open a PDF I lost the password for?</summary><p>No. Unlock removes a password you know. It cannot crack one.</p></details>
+    </section>
+  </main>
+
+  <footer><div class="wrap"></div></footer>
+  <script type="module" src="src/site.js"></script>
+</body>
+</html>

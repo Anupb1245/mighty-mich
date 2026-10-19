@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inkfold</title>
+  <meta name="description" content="PDF tools that run in your browser." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+  <div class="nav"><div class="wrap"></div></div>
+  <main id="tool" aria-live="polite"></main>
+  <footer><div class="wrap"></div></footer>
+  <script type="module">
+    import "./src/site.js";
+    import { boot } from "./src/ui/toolPage.js";
+    boot();
+  </script>
+</body>
+</html>

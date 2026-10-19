@@ -126,3 +126,6 @@ app.__qa_backup/
 .next-playwright/
 cloud/
 electron/dist-electron
+
+# Standalone static site, not part of the server image
+pdf-tools
