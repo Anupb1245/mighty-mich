@@ -4,7 +4,7 @@ import { readFile, stat } from "node:fs/promises";
 import { join, normalize, extname, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const root = process.env.SERVE_ROOT || dirname(dirname(fileURLToPath(import.meta.url)));
 const port = Number(process.env.PORT || 4173);
 const types = {
   ".html": "text/html; charset=utf-8",

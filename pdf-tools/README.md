@@ -16,9 +16,27 @@ npm install        # also copies the three vendored libraries into vendor/
 npm start          # http://localhost:4173
 ```
 
-Any static host works: upload the folder (minus `node_modules/`) after
-`npm install` has produced `vendor/`. `_redirects` (Netlify) and `vercel.json`
-give every tool a clean URL such as `/merge-pdf`.
+## Host it on GitHub Pages
+
+The workflow in `.github/workflows/pages.yml` installs, runs the unit tests,
+builds `dist/` and publishes it. It runs on every push to `main` that touches
+`pdf-tools/`, and can be started by hand from the Actions tab.
+
+One-time setup, in the repository on GitHub:
+
+1. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+   (The workflow also tries to enable this itself on first run.)
+2. Merge this branch into `main`, or open **Actions → Deploy Inkfold to GitHub
+   Pages → Run workflow** and pick the branch.
+
+The site then lives at `https://<user>.github.io/<repo>/`. Every link in the
+site is relative, so it works under that sub-path. On Pages the tool URLs are
+`tool.html?tool=merge-pdf`; the clean `/merge-pdf` form needs a host with
+rewrites (Netlify `_redirects`, Vercel `vercel.json`, both included).
+
+## Host it anywhere else
+
+`npm run build` writes `dist/`: upload that folder to any static host.
 
 ## Test it
 
