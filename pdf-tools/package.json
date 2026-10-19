@@ -1,0 +1,23 @@
+{
+  "name": "pdf-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Free PDF tools that run entirely in your browser. Files never leave your device.",
+  "type": "module",
+  "scripts": {
+    "vendor": "node scripts/vendor.mjs",
+    "postinstall": "node scripts/vendor.mjs",
+    "start": "node scripts/serve.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:e2e": "node tests/e2e/run.mjs"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@cantoo/pdf-lib": "^2.11.1",
+    "fflate": "^0.8.2",
+    "pdfjs-dist": "^4.10.38"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.56.1"
+  }
+}

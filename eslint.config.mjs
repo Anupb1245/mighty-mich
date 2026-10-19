@@ -131,6 +131,8 @@ const eslintConfig = [
       "_mono_repo/**",
       // Electron app
       "electron/**",
+      // Standalone browser-only PDF tools site (own package, own tests: pdf-tools/npm test)
+      "pdf-tools/**",
       // Docs
       "docs/**",
       // Open-SSE compiled/bundled output
