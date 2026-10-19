@@ -2,7 +2,7 @@
 // Also generates clean-URL rewrites (Netlify, Vercel), a sitemap and robots.txt from the tool catalog.
 import { cpSync, mkdirSync, rmSync, writeFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const out = join(root, "dist");
@@ -13,11 +13,18 @@ if (!existsSync(join(root, "vendor", "pdf-lib.esm.js"))) {
   process.exit(1);
 }
 
-// Tool ids straight from the catalog sources (no browser-only imports needed).
-const ids = [];
-for (const f of readdirSync(join(root, "src/catalog")).filter((f) => f.endsWith(".js"))) {
-  const src = readFileSync(join(root, "src/catalog", f), "utf8");
-  for (const m of src.matchAll(/^\s{4}id:\s*"([a-z0-9-]+)"/gm)) ids.push(m[1]);
+// Tool ids from the registry itself (the catalog modules are safe to import under Node);
+// fall back to scanning the sources if a browser-only import ever sneaks in.
+let ids = [];
+try {
+  const { TOOLS } = await import(pathToFileURL(join(root, "src/registry.js")).href);
+  ids = TOOLS.filter((t) => !t.hidden).map((t) => t.id);
+} catch (err) {
+  console.warn("build: registry import failed, scanning sources:", String(err?.message || err).slice(0, 80));
+  for (const f of readdirSync(join(root, "src/catalog")).filter((f) => f.endsWith(".js"))) {
+    const src = readFileSync(join(root, "src/catalog", f), "utf8");
+    for (const m of src.matchAll(/^\s*id:\s*"([a-z0-9-]+)",?\s*$/gm)) ids.push(m[1]);
+  }
 }
 const unique = [...new Set(ids)];
 

@@ -1,6 +1,6 @@
 // PDF -> docx / xlsx / pptx writers. Hand-written Office Open XML, zipped with fflate.
 import { result, baseName, ToolError } from "./core.js";
-import { linesOf } from "../render.js";
+import { linesOf } from "./lines.js";
 import { zipFiles } from "../zip.js";
 
 export const MIME = {

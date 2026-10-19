@@ -36,38 +36,38 @@ eSign,security,skip,yes,skip,regulated + server
 Accounts and daily task limit,account,skip,yes,skip,clone has no accounts and no limits on purpose
 Pricing and subscription,account,skip,yes,skip,clone is free and local-only
 PDF to PNG,convert,should,yes,yes,pdf-to-png
-PDF OCR (searchable text layer),convert,must,yes,no,pdf-ocr; in-browser engine
+PDF OCR (searchable text layer),convert,must,yes,yes,pdf-ocr; in-browser engine
 PDF to PDF/A,convert,should,yes,yes,pdf-to-pdfa
 PDF converter hub,convert,should,yes,yes,pdf-converter
-PDF to Word,pdf-to-office,must,yes,no,basic: text/paragraphs
-PDF to Excel,pdf-to-office,should,yes,no,basic: rows/columns from positions
-PDF to PPT,pdf-to-office,should,yes,no,page image per slide + notes
-Word to PDF,office-to-pdf,must,yes,no,basic fidelity
-Excel to PDF,office-to-pdf,should,yes,no,tables per sheet
-PPT to PDF,office-to-pdf,should,yes,no,slide text + pictures
-ODT to PDF,openoffice-to-pdf,could,yes,no,
-ODS to PDF,openoffice-to-pdf,could,yes,no,
-ODP to PDF,openoffice-to-pdf,could,yes,no,
+PDF to Word,pdf-to-office,must,yes,yes,basic: text/paragraphs
+PDF to Excel,pdf-to-office,should,yes,yes,basic: rows/columns from positions
+PDF to PPT,pdf-to-office,should,yes,yes,page image per slide + notes
+Word to PDF,office-to-pdf,must,yes,yes,basic fidelity
+Excel to PDF,office-to-pdf,should,yes,yes,tables per sheet
+PPT to PDF,office-to-pdf,should,yes,yes,slide text + pictures
+ODT to PDF,openoffice-to-pdf,could,yes,yes,
+ODS to PDF,openoffice-to-pdf,could,yes,yes,
+ODP to PDF,openoffice-to-pdf,could,yes,yes,
 TXT to PDF,convert-to-pdf,should,yes,yes,txt-to-pdf
 RTF to PDF,convert-to-pdf,could,yes,yes,rtf-to-pdf
 HWP to PDF,convert-to-pdf,skip,yes,skip,proprietary Korean format; no browser parser
 HTML to PDF,convert-to-pdf,should,yes,yes,"content-based, not pixel rendering"
-EPUB to PDF,convert-to-pdf,could,yes,no,
+EPUB to PDF,convert-to-pdf,could,yes,yes,
 ZIP to PDF,convert-to-pdf,could,yes,yes,zip-to-pdf
 CSV to PDF,convert-to-pdf,should,yes,yes,csv-to-pdf
-Pages to PDF,iwork-to-pdf,could,yes,no,uses the preview PDF inside the .pages bundle
-"Edit PDF (text, shapes, images)",edit,must,yes,no,edit-pdf
-"PDF Annotator (highlight, draw, notes)",edit,must,yes,no,pdf-annotator
-PDF Reader (viewer with search),edit,should,yes,no,pdf-reader
-Crop PDF,edit,should,yes,no,crop-pdf
-Redact PDF (content really removed),edit,must,yes,no,redact-pdf
-PDF Form Filler,edit,must,yes,no,pdf-form-filler
+Pages to PDF,iwork-to-pdf,could,yes,yes,uses the preview PDF inside the .pages bundle
+"Edit PDF (text, shapes, images)",edit,must,yes,yes,edit-pdf
+"PDF Annotator (highlight, draw, notes)",edit,must,yes,yes,pdf-annotator
+PDF Reader (viewer with search),edit,should,yes,yes,pdf-reader
+Crop PDF,edit,should,yes,yes,crop-pdf
+Redact PDF (content really removed),edit,must,yes,yes,redact-pdf
+PDF Form Filler,edit,must,yes,yes,pdf-form-filler
 Share PDF,edit,could,yes,partial,share-pdf via the device share sheet; no server links
-Sign PDF (draw / type / upload),fill-sign,must,yes,no,sign-pdf
+Sign PDF (draw / type / upload),fill-sign,must,yes,yes,sign-pdf
 Request signatures from others,fill-sign,skip,yes,skip,needs a server and audit trail
-AI PDF Assistant / Chat with PDF,ai,should,yes,no,bring-your-own OpenAI-compatible endpoint
-AI Summarizer,ai,should,yes,no,BYO endpoint
-Translate PDF,ai,could,yes,no,BYO endpoint; produces a translated PDF
-AI Question Generator,ai,could,yes,no,BYO endpoint
+AI PDF Assistant / Chat with PDF,ai,should,yes,yes,bring-your-own OpenAI-compatible endpoint
+AI Summarizer,ai,should,yes,yes,BYO endpoint
+Translate PDF,ai,could,yes,yes,BYO endpoint; produces a translated PDF
+AI Question Generator,ai,could,yes,yes,BYO endpoint
 PDF Scanner (camera),scan,should,yes,yes,pdf-scanner; no edge detection yet
 Tools mega-menu by category,home,should,yes,yes,
