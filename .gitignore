@@ -258,4 +258,6 @@ docker-compose.yml.bak
 !.claude/skills/
 !.claude/skills/replica-*
 !.claude/skills/replica-*/**
+!.claude/skills/master-developer
+!.claude/skills/master-developer/**
 .claude/skills/replica-*/__pycache__/
