@@ -2,8 +2,9 @@ import { h } from "./dom.js";
 import { icons } from "../icons.js";
 
 /** Big drop target + hidden file input. onFiles(FileList|File[]). */
-export function dropzone({ accept, multiple, label, hint, onFiles, compact = false }) {
+export function dropzone({ accept, multiple, label, hint, onFiles, compact = false, capture }) {
   const input = h("input", { type: "file", accept, multiple: !!multiple, onchange: () => input.files.length && (onFiles([...input.files]), (input.value = "")) });
+  if (capture) input.setAttribute("capture", capture);
   const zone = h(
     "div",
     {
@@ -28,7 +29,7 @@ export function dropzone({ accept, multiple, label, hint, onFiles, compact = fal
     h("div", { html: icons.upload }),
     h("div", { class: "big" }, label),
     h("div", { class: "hint" }, hint),
-    h("div", { style: "margin-top:16px" }, h("span", { class: "btn" }, "Choose files")),
+    h("div", { style: "margin-top:16px" }, h("span", { class: "btn" }, capture ? "Take a photo or choose files" : multiple ? "Choose files" : "Choose file")),
     input
   );
   if (compact) zone.style.padding = "24px";

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inkfold</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    // GitHub Pages has no rewrites, so /merge-pdf lands here. Send it to the tool page.
+    (function () {
+      var parts = location.pathname.split("/").filter(Boolean);
+      var slug = parts[parts.length - 1] || "";
+      if (/^[a-z0-9-]+$/.test(slug) && slug !== "404.html") {
+        var base = location.pathname.replace(/[^/]*$/, "");
+        location.replace(base + (slug === "tools" ? "tools.html" : "tool.html?tool=" + slug) + location.hash);
+      }
+    })();
+  </script>
+</head>
+<body>
+  <main class="wrap" style="padding:64px 16px;text-align:center">
+    <h1>Page not found</h1>
+    <p class="muted">Try the <a href="tools.html">tools catalogue</a>.</p>
+  </main>
+</body>
+</html>

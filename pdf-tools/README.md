@@ -30,13 +30,26 @@ One-time setup, in the repository on GitHub:
    Pages → Run workflow** and pick the branch.
 
 The site then lives at `https://<user>.github.io/<repo>/`. Every link in the
-site is relative, so it works under that sub-path. On Pages the tool URLs are
-`tool.html?tool=merge-pdf`; the clean `/merge-pdf` form needs a host with
-rewrites (Netlify `_redirects`, Vercel `vercel.json`, both included).
+site is relative, so it works under that sub-path. Clean tool URLs such as
+`/merge-pdf` work there too: Pages serves `404.html` for unknown paths and that
+page redirects to the tool.
 
 ## Host it anywhere else
 
-`npm run build` writes `dist/`: upload that folder to any static host.
+`npm run build` writes `dist/`: upload that folder to any static host. The
+build also generates `_redirects` (Netlify), `vercel.json` (Vercel, with a
+CSP), `robots.txt` and, when `SITE_URL=https://your.domain` is set, a
+`sitemap.xml`, all from the tool catalog.
+
+### Custom domain
+
+- GitHub Pages: **Settings → Pages → Custom domain**, then at your registrar add
+  a `CNAME` record from `www` (or your subdomain) to `<user>.github.io`, or for
+  an apex domain the four `A` records GitHub lists (185.199.108.153,
+  185.199.109.153, 185.199.110.153, 185.199.111.153). Tick "Enforce HTTPS" once
+  the certificate is issued.
+- Netlify / Vercel: add the domain in the dashboard and follow the DNS records
+  it shows.
 
 ## Test it
 

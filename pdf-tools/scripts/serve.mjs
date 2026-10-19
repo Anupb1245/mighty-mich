@@ -35,7 +35,16 @@ createServer(async (req, res) => {
     });
     res.end(body);
   } catch {
-    res.writeHead(404, { "content-type": "text/plain" });
-    res.end("not found");
+    // Like GitHub Pages: serve 404.html (which redirects clean tool URLs) when present.
+    try {
+      // a project site's 404.html lives in its sub-folder (/<repo>/404.html), so look there first
+      const first = decodeURIComponent(new URL(req.url, "http://x").pathname).split("/").filter(Boolean)[0] || "";
+      const body = await readFile(join(root, first, "404.html")).catch(() => readFile(join(root, "404.html")));
+      res.writeHead(404, { "content-type": "text/html; charset=utf-8" });
+      res.end(body);
+    } catch {
+      res.writeHead(404, { "content-type": "text/plain" });
+      res.end("not found");
+    }
   }
 }).listen(port, () => console.log(`pdf-tools: http://localhost:${port}`));

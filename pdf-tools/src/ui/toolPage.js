@@ -1,4 +1,4 @@
-import { byId, TOOLS, CATEGORIES } from "../registry.js";
+import { byId, TOOLS, categoryOf } from "../registry.js";
 import * as render from "../render.js";
 import { h, toast, download, readFile, formatBytes, prompt } from "./dom.js";
 import { dropzone, pageDrop } from "./dropzone.js";
@@ -16,11 +16,15 @@ export function mountTool(root, toolId, initialFiles = []) {
     root.replaceChildren(h("div", { class: "wrap section" }, h("h1", {}, "That tool does not exist."), h("a", { href: "tools.html" }, "See all tools")));
     return;
   }
-  const cat = CATEGORIES.find((c) => c.id === tool.category);
+  const cat = categoryOf(tool);
+  if (tool.styles && !document.querySelector(`link[data-tool-style="${tool.id}"]`)) {
+    document.head.append(h("link", { rel: "stylesheet", href: tool.styles, dataset: { toolStyle: tool.id } }));
+  }
   document.title = `${tool.name} — Inkfold`;
   document.querySelector('meta[name="description"]')?.setAttribute("content", `${tool.tagline} Runs in your browser; nothing is uploaded.`);
 
   const state = { files: [], status: "idle", result: null, error: null, progress: 0 };
+  let custom = null; // handle returned by a custom tool UI
   const single = tool.mode !== "files";
   const maxFiles = single ? 1 : tool.maxFiles || 50;
   let options = optionsForm(tool.options || []);
@@ -45,6 +49,15 @@ export function mountTool(root, toolId, initialFiles = []) {
         toast(err.message || "Could not read that file.", "error");
       }
     }
+    if (added && tool.hub) {
+      const files = state.files.map((f) => new File([f.bytes], f.name, { type: "application/pdf" }));
+      const target = tool.hub.map((id) => byId[id]).find((t) => t && (t.kinds || []).includes("pdf"));
+      if (target) {
+        history.pushState({}, "", `tool.html?tool=${target.id}`);
+        mountTool(root, target.id, files);
+        return;
+      }
+    }
     if (added) {
       state.error = null;
       state.status = "loaded";
@@ -52,22 +65,37 @@ export function mountTool(root, toolId, initialFiles = []) {
     }
   }
 
+  const EXT = (name) => (String(name).match(/\.([a-z0-9]+)$/i) || [, ""])[1].toLowerCase();
+  const IMAGE_EXT = /^(jpe?g|png|webp|gif|bmp|avif|svg)$/;
+
   async function loadOne(f) {
     const bytes = await readFile(f);
-    const file = { name: f.name, bytes, size: bytes.length, pageCount: 0, pages: [], thumb: null, password: undefined, kind: "pdf" };
-    if (tool.kinds.includes("image") && !tool.kinds.includes("pdf")) {
-      if (!/^image\//.test(f.type) && !/\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(f.name)) throw new ToolError(`${f.name} is not an image.`);
+    const ext = EXT(f.name);
+    const file = { name: f.name, bytes, size: bytes.length, pageCount: 0, pages: [], thumb: null, password: undefined, kind: "pdf", ext };
+    const kinds = tool.kinds || ["pdf"];
+    const isImage = /^image\//.test(f.type) || IMAGE_EXT.test(ext);
+    const pdf = isPdf(file);
+    const acceptsExt = kinds.includes("any") || kinds.includes(ext);
+
+    if (pdf && kinds.includes("pdf")) {
+      // fall through to the PDF path below
+    } else if (isImage && kinds.includes("image")) {
       file.kind = "image";
       file.pageCount = 1;
       file.pages = defaultPages(1);
       file.thumb = await render.imagePreview(bytes);
       if (!file.thumb) throw new ToolError(`${f.name} could not be opened by your browser.`);
       return file;
+    } else if (acceptsExt) {
+      file.kind = ext || "file";
+      return file;
+    } else {
+      const want = kinds.includes("pdf") ? "a PDF" : kinds.includes("image") ? "an image" : kinds.map((k) => `.${k}`).join(", ");
+      throw new ToolError(`${f.name} is not ${want}.`);
     }
-    if (!isPdf(file)) throw new ToolError(`${f.name} is not a PDF.`);
+
     if (bytes.length > WARN_BYTES) toast(`${f.name} is ${formatBytes(bytes.length)}. Large files can be slow in the browser.`);
     // locked?
-    let error = "";
     for (;;) {
       try {
         const info = await render.inspectPdf(bytes, file.password);
@@ -102,6 +130,10 @@ export function mountTool(root, toolId, initialFiles = []) {
       renderPage: render.renderPage,
       resizeJpeg: render.resizeJpeg,
       toPng: render.toPng,
+      thumbnail: render.thumbnail,
+      extractText: render.extractText,
+      enhanceImage: render.enhanceImage,
+      inspectPdf: render.inspectPdf,
       onProgress: (p) => {
         state.progress = p;
         const bar = root.querySelector(".bar i");
@@ -110,7 +142,8 @@ export function mountTool(root, toolId, initialFiles = []) {
     };
     try {
       const files = state.files.map((f) => ({ ...f, pages: f.pages.map((p) => ({ ...p })) }));
-      state.result = await tool.run(files, options.values(), ctx);
+      const extra = custom?.collect ? await custom.collect() : {};
+      state.result = await tool.run(files, { ...options.values(), ...extra }, ctx);
       state.status = "done";
     } catch (err) {
       if (!(err instanceof ToolError)) console.error(err);
@@ -127,6 +160,8 @@ export function mountTool(root, toolId, initialFiles = []) {
   }
 
   function reset() {
+    custom?.destroy?.();
+    custom = null;
     state.files.forEach((x) => render.forget(x.bytes));
     state.files = [];
     state.result = null;
@@ -154,18 +189,51 @@ export function mountTool(root, toolId, initialFiles = []) {
   }
 
   function zone(compact = false) {
-    const pdfOnly = tool.kinds.includes("pdf");
+    const kinds = tool.kinds || ["pdf"];
+    const what = kinds.includes("pdf") ? (single ? "a PDF" : "PDFs") : kinds.includes("image") ? "images" : tool.dropLabel || `a ${kinds.filter((k) => k !== "any").map((k) => k.toUpperCase()).join(" / ") || "file"} file`;
     return dropzone({
       accept: tool.accept,
       multiple: !single,
+      capture: tool.capture,
       compact,
-      label: compact ? "Add more files" : single ? (pdfOnly ? "Drop a PDF here" : "Drop images here") : pdfOnly ? "Drop PDFs here" : "Drop images here",
+      label: compact ? "Add more files" : `Drop ${what} here`,
       hint: "or click to choose. Nothing is uploaded; it all runs on your device.",
       onFiles: addFiles,
     });
   }
 
+  // What a custom tool UI gets to work with.
+  const api = {
+    render,
+    h,
+    toast,
+    download,
+    formatBytes,
+    prompt,
+    icons,
+    setError: showError,
+    setResult(result) {
+      state.result = result;
+      state.status = "done";
+      paint();
+    },
+    reset,
+    get files() {
+      return state.files;
+    },
+    get options() {
+      return options.values();
+    },
+    run,
+  };
+
   function main() {
+    if (tool.mode === "custom") {
+      custom?.destroy?.();
+      const container = h("div", { class: "panel custom" });
+      custom = tool.ui({ file: state.files[0], files: state.files, container, api }) || null;
+      return container;
+    }
     if (tool.mode === "files") {
       const list = fileList(state.files, {
         onChange: () => list.render(),
@@ -222,7 +290,7 @@ export function mountTool(root, toolId, initialFiles = []) {
         "div",
         { class: "file" },
         h("img", { class: "thumb", src: file.thumb || "", alt: "" }),
-        h("div", { class: "meta" }, h("b", {}, file.name), h("span", {}, [file.pageCount ? `${file.pageCount} pages · ` : file.locked ? "locked · " : "", formatBytes(file.size)].join(""))),
+        h("div", { class: "meta" }, h("b", {}, file.name), h("span", {}, [file.pageCount ? `${file.pageCount} page${file.pageCount === 1 ? "" : "s"} · ` : file.locked ? "locked · " : file.kind !== "pdf" ? `${file.kind.toUpperCase()} · ` : "", formatBytes(file.size)].join(""))),
         h("button", { class: "iconbtn danger", title: "Remove", "aria-label": "Remove file", html: icons.x, onclick: reset })
       ),
       h("div", { style: "margin-top:14px" }, zone(true))
@@ -233,7 +301,7 @@ export function mountTool(root, toolId, initialFiles = []) {
     return h(
       "aside",
       { class: "side" },
-      h("div", { class: "panel" }, h("h3", {}, "Options"), (tool.options || []).length ? options.el : h("p", { class: "muted", style: "font-size:14px" }, "No options. Just go."), state.error && h("div", { class: "alert error", role: "alert" }, state.error), h("button", { class: "btn lg block", id: "run", style: "margin-top:8px", onclick: run }, tool.action)),
+      h("div", { class: "panel" }, h("h3", {}, "Options"), (tool.options || []).length ? options.el : h("p", { class: "muted", style: "font-size:14px" }, tool.noRun ? "Everything happens in the workspace on the left." : "No options. Just go."), state.error && h("div", { class: "alert error", role: "alert" }, state.error), !tool.noRun && h("button", { class: "btn lg block", id: "run", style: "margin-top:8px", onclick: run }, tool.action)),
       h("div", { class: "alert info", html: `${icons.shield} <span>Processed on your device. Nothing is uploaded.</span>`, style: "display:flex;gap:8px;align-items:center" }),
       h("button", { class: "btn ghost block", onclick: reset }, "Start over")
     );
@@ -252,7 +320,7 @@ export function mountTool(root, toolId, initialFiles = []) {
           ? `${formatBytes(r.sizeBefore)} · already as small as this method gets`
           : `${formatBytes(r.sizeBefore)} → ${formatBytes(r.sizeAfter)} `
         : formatBytes(r.sizeAfter) + (r.pageCount ? ` · ${r.pageCount} page${r.pageCount === 1 ? "" : "s"}` : "");
-    const next = TOOLS.filter((t) => t.id !== tool.id && ((r.kind === "pdf" && t.kinds.includes("pdf") && t.mode !== "files") || (r.kind === "image" && t.kinds.includes("image"))));
+    const next = TOOLS.filter((t) => t.id !== tool.id && !t.hidden && ((r.kind === "pdf" && (t.kinds || []).includes("pdf") && t.mode !== "files") || (r.kind === "image" && (t.kinds || []).includes("image"))));
     return h(
       "div",
       { class: "panel result" },
@@ -272,9 +340,11 @@ export function mountTool(root, toolId, initialFiles = []) {
 
   function paint() {
     let body;
-    if (state.status === "idle") body = h("div", { class: "wrap" }, zone());
+    if (tool.hub && state.status === "idle") body = h("div", { class: "wrap" }, h("div", { class: "grid" }, tool.hub.map((id) => byId[id]).filter(Boolean).map(toolCard)), h("p", { class: "muted", style: "margin-top:16px;text-align:center;font-size:14px" }, "Or drop a PDF here to start with PDF to Word."), zone(true));
+    else if (state.status === "idle") body = h("div", { class: "wrap" }, zone());
     else if (state.status === "working") body = h("div", { class: "wrap" }, progress());
     else if (state.status === "done") body = h("div", { class: "wrap" }, resultCard());
+    else if (tool.layout === "full") body = h("div", { class: "wrap work full" }, main(), state.error && h("div", { class: "alert error", role: "alert" }, state.error));
     else body = h("div", { class: "wrap work" }, main(), side());
     root.replaceChildren(head(), body, extras());
   }
