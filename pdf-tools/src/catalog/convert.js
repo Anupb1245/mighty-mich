@@ -5,6 +5,21 @@ import { epubToPdf, pagesToPdf } from "../tools/ebook.js";
 import { pdfToDocx, pdfToXlsx, pdfToPptx } from "../tools/officeOut.js";
 
 const PDF = { accept: "application/pdf,.pdf", kinds: ["pdf"] };
+/**
+ * Exact layout first (a real layout engine in the browser); if that engine cannot render the
+ * file, fall back to the text pipeline and say so in the result's stats.
+ */
+async function exactOrText(fn, textRunner, files, o, ctx) {
+  if (o.layout === "text" || !ctx.exact) return textRunner(files, o, ctx);
+  try {
+    return await (await ctx.exact())[fn](files, o, ctx);
+  } catch (err) {
+    const r = await textRunner(files, o, ctx);
+    r.stats = { ...(r.stats || {}), mode: "text", fallbackFrom: "exact", reason: String(err?.message || err).slice(0, 160) };
+    return r;
+  }
+}
+const LAYOUT_OPT = { key: "layout", type: "radio", label: "Output", default: "exact", choices: [["exact", "Exact layout — looks like the original (recommended)"], ["text", "Text only — small, re-flowed, basic styling"]] };
 const PAGE_OPT = { key: "pageSize", type: "radio", label: "Page size", default: "a4", choices: [["a4", "A4"], ["letter", "Letter"]] };
 const LANDSCAPE_OPT = { key: "landscape", type: "checkbox", label: "Landscape pages", default: true };
 const FIDELITY = ["How faithful is the result?", "Text, headings, lists, tables and pictures are rebuilt in your browser. Simple and medium documents come out well; complex layouts (columns, text boxes, exotic fonts) are simplified. Nothing is uploaded."];
@@ -22,8 +37,9 @@ export default [
     accept: ".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     kinds: ["docx"],
     action: "Convert to PDF",
-    run: docxToPdf,
-    options: [PAGE_OPT],
+    run: (files, o, ctx) => exactOrText("docxToPdf", docxToPdf, files, o, ctx),
+    options: [LAYOUT_OPT, PAGE_OPT],
+    exactMode: true,
     howto: howto("Word (.docx)"),
     faq: [FIDELITY, ["What about .doc?", "Only the modern .docx format. Open an old .doc in Word or LibreOffice and save it as .docx first."]],
     related: ["pdf-to-word", "odt-to-pdf", "compress-pdf"],
@@ -38,8 +54,9 @@ export default [
     accept: ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     kinds: ["xlsx"],
     action: "Convert to PDF",
-    run: xlsxToPdf,
-    options: [PAGE_OPT, LANDSCAPE_OPT],
+    run: (files, o, ctx) => exactOrText("xlsxToPdf", xlsxToPdf, files, o, ctx),
+    options: [LAYOUT_OPT, PAGE_OPT, LANDSCAPE_OPT],
+    exactMode: true,
     howto: howto("Excel (.xlsx)"),
     faq: [["Are formulas calculated?", "The last values Excel saved are used, so what you saw in Excel is what you get. Charts and merged-cell formatting are not drawn."], ["What about .xls?", "Only .xlsx. Save the workbook as .xlsx first."]],
     related: ["pdf-to-excel", "csv-to-pdf", "ods-to-pdf"],
@@ -54,7 +71,11 @@ export default [
     accept: ".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation",
     kinds: ["pptx"],
     action: "Convert to PDF",
-    run: pptxToPdf,
+    run: (files, o, ctx) => exactOrText("pptxToPdf", pptxToPdf, files, o, ctx),
+    options: [
+      LAYOUT_OPT,
+    ],
+    exactMode: true,
     howto: howto("PowerPoint (.pptx)"),
     faq: [["What is kept?", "Slide size, titles, text, bullet levels, pictures and tables. Themes, backgrounds, animations and SmartArt are not drawn."], ["What about .ppt?", "Only .pptx. Save as .pptx first."]],
     related: ["pdf-to-ppt", "odp-to-pdf", "pdf-to-jpg"],
@@ -147,8 +168,32 @@ export default [
     ...PDF,
     action: "Convert to Word",
     run: pdfToDocx,
+    options: [
+      {
+        key: "layout",
+        type: "radio",
+        label: "Layout",
+        default: "exact",
+        choices: [
+          ["exact", "Keep layout — text, images and pages stay where they were"],
+          ["flow", "Flowing text — plain paragraphs, easiest to re-edit"],
+        ],
+      },
+      {
+        key: "background",
+        type: "radio",
+        label: "Page background (keep layout only)",
+        default: "auto",
+        choices: [
+          ["auto", "Auto — only for drawing-heavy or near-empty pages"],
+          ["always", "Always — a picture of each page behind the text"],
+          ["never", "Never"],
+        ],
+        showIf: { layout: "exact" },
+      },
+    ],
     howto: howtoOut("Word (.docx)"),
-    faq: [["What does the Word file contain?", "The PDF's text as paragraphs, with headings and bold detected from the font sizes and weights, one page break per PDF page. Images and exact layout are not carried over."], ["My PDF is a scan and the result is empty.", "A scanned PDF has no text layer. Run PDF OCR first, then convert the result."]],
+    faq: [["What does the Word file contain?", "Keep layout: every page at its own size, each block of text as an editable text frame exactly where it was, with its size, weight and alignment, and the page's images in place; drawing-heavy pages can get a picture of the page behind the text. Flowing text: plain paragraphs with headings and bold, one page break per page."], ["My PDF is a scan and the result is empty.", "A scanned PDF has no text layer. Run PDF OCR first, then convert the result."], ["Why is the text in frames?", "Frames are how Word pins text to a position. Click into one to edit; drag its border to move it. Pick Flowing text if you would rather reflow everything."]],
     related: ["word-to-pdf", "pdf-ocr", "pdf-to-excel"],
   },
   {
@@ -162,7 +207,7 @@ export default [
     action: "Convert to Excel",
     run: pdfToXlsx,
     howto: howtoOut("Excel (.xlsx)"),
-    faq: [["How are columns detected?", "Each text line becomes a row; wide horizontal gaps split it into cells. Numbers become numeric cells. Each PDF page becomes a sheet."], ["Scanned tables?", "Run PDF OCR first; a scan has no text to extract."]],
+    faq: [["How are columns detected?", "Column boundaries are found where no table row has ink, page-wide, so cells line up across rows. Numbers (with currency signs, thousands separators or a trailing %) become numeric cells, the header row is bold, column widths follow the text, and lines outside the table become one cell each. Each PDF page becomes a sheet."], ["Scanned tables?", "Run PDF OCR first; a scan has no text to extract."]],
     related: ["excel-to-pdf", "pdf-to-word", "csv-to-pdf"],
   },
   {

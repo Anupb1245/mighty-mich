@@ -75,3 +75,17 @@ export const TINY_JPEG = new Uint8Array(
     "base64"
   )
 );
+
+/** Real text per page via pdf.js (legacy build for Node). Returns string[]; empty string for image-only pages. */
+export async function textOfPdf(bytes) {
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(bytes), isEvalSupported: false, useSystemFonts: true, disableFontFace: true }).promise;
+  const out = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const tc = await page.getTextContent();
+    out.push(tc.items.map((it) => it.str || "").join(" ").replace(/\s+/g, " ").trim());
+  }
+  await doc.destroy();
+  return out;
+}

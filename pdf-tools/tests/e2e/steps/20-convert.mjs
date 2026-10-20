@@ -38,24 +38,26 @@ export default async function ({ page, step, BASE, tmp, downloadBytes }) {
     })
   );
 
-  const convert = async (tool, file) => {
+  const convert = async (tool, file, before) => {
     await page.goto(`${BASE}/tool.html?tool=${tool}`);
     await page.setInputFiles("input[type=file]", join(tmp, file));
     await page.waitForSelector("#run");
+    if (before) await before();
     await page.click("#run");
     await page.waitForSelector("#download", { timeout: 60_000 });
     return downloadBytes(page, () => page.click("#download"));
   };
 
   await step("word to pdf: docx with heading and 60 paragraphs becomes a multi-page PDF", async () => {
-    const { name, bytes } = await convert("word-to-pdf", "memo.docx");
+    // the text pipeline; the exact-layout engine has its own steps in 25-exact.mjs
+    const { name, bytes } = await convert("word-to-pdf", "memo.docx", () => page.click("text=Text only"));
     if (name !== "memo.pdf") throw new Error(name);
     const doc = await PDFDocument.load(bytes);
     if (doc.getPageCount() < 2) throw new Error(`pages ${doc.getPageCount()}`);
   });
 
   await step("excel to pdf: 80 rows render as a landscape table", async () => {
-    const { bytes } = await convert("excel-to-pdf", "book.xlsx");
+    const { bytes } = await convert("excel-to-pdf", "book.xlsx", () => page.click("text=Text only"));
     const doc = await PDFDocument.load(bytes);
     if (doc.getPageCount() < 2) throw new Error(`pages ${doc.getPageCount()}`);
     const p = doc.getPage(0);
@@ -68,7 +70,7 @@ export default async function ({ page, step, BASE, tmp, downloadBytes }) {
     const files = unzipSync(bytes);
     const xml = strFromU8(files["word/document.xml"]);
     if (!xml.includes("Page 1") || !xml.includes("Page 3")) throw new Error("text missing: " + xml.slice(0, 300));
-    if ((xml.match(/w:type="page"/g) || []).length !== 2) throw new Error("page breaks");
+    if ((xml.match(/<w:sectPr>/g) || []).length !== 3) throw new Error("sections (exact layout: one per page + body)");
   });
 
   await step("pdf to ppt: one slide per page with a rendered JPEG and notes", async () => {

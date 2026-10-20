@@ -142,6 +142,13 @@ export async function extractText(bytes, { password } = {}) {
       const [a, b, c, d, e, f] = it.transform;
       const size = Math.hypot(b, d) || Math.abs(d) || 10;
       const style = tc.styles[it.fontName];
+      let fontName = "";
+      try {
+        fontName = page.commonObjs.has(it.fontName) ? page.commonObjs.get(it.fontName)?.name || "" : "";
+      } catch {
+        fontName = "";
+      }
+      const family = fontName || style?.fontFamily || "";
       items.push({
         str: it.str,
         x: e,
@@ -149,7 +156,9 @@ export async function extractText(bytes, { password } = {}) {
         w: it.width,
         h: it.height || size,
         size,
-        bold: /bold|black|heavy|semibold/i.test(style?.fontFamily || "") || /bold/i.test(it.fontName || ""),
+        font: family,
+        bold: /bold|black|heavy|semibold|demi/i.test(family) || /bold/i.test(it.fontName || ""),
+        italic: /italic|oblique/i.test(family),
         eol: !!it.hasEOL,
       });
     }

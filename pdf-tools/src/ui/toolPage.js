@@ -1,5 +1,6 @@
 import { byId, TOOLS, categoryOf } from "../registry.js";
 import * as render from "../render.js";
+import { pageImages } from "../pageImages.js";
 import { h, toast, download, readFile, formatBytes, prompt } from "./dom.js";
 import { dropzone, pageDrop } from "./dropzone.js";
 import { optionsForm } from "./options.js";
@@ -132,7 +133,9 @@ export function mountTool(root, toolId, initialFiles = []) {
       toPng: render.toPng,
       thumbnail: render.thumbnail,
       extractText: render.extractText,
+      pageImages,
       enhanceImage: render.enhanceImage,
+      exact: () => import("../exact.js"), // exact-layout Office rendering, loaded on demand
       inspectPdf: render.inspectPdf,
       onProgress: (p) => {
         state.progress = p;
@@ -327,6 +330,7 @@ export function mountTool(root, toolId, initialFiles = []) {
       h("div", { class: "ok", html: icons.check }),
       h("div", { class: "fname", id: "result-name" }, r.name),
       h("div", { class: "sizes", id: "result-size" }, sizeText, tool.id === "compress-pdf" && !r.stats?.unchanged && saved > 0 && h("b", {}, `−${Math.round(saved * 100)}%`)),
+      r.stats?.fallbackFrom && h("div", { class: "alert info", style: "display:inline-block;margin:0 0 16px;font-size:13px" }, "The layout engine could not read this file, so it was converted as text instead."),
       h(
         "div",
         { class: "actions" },

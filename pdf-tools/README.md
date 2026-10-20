@@ -22,12 +22,19 @@ it already has. No upload, no account, no daily limit, no subscription.
 | AI PDF | AI Assistant, Chat with PDF, Summarizer, Translate PDF, Question Generator, on an OpenAI-compatible endpoint you choose |
 | Scan | PDF Scanner (camera capture with document enhancement) |
 
-Honest limits: Office conversions are rebuilt from text, tables and images,
-so simple documents come out well and heavy layouts lose polish; PDF to Office
-is text-only; the AI tools need an endpoint you configure (nothing is sent
-anywhere else); OCR languages other than English are fetched on first use;
-collecting other people's signatures and HWP files need a server, so they are
-not offered.
+How the Office conversions keep the design: Word, Excel and PowerPoint files
+are rendered by a real layout engine inside the browser (docx-preview, ExcelJS
+styles, pptx-preview), each page is rasterized exactly as it looks, and an
+invisible text layer keeps the PDF searchable and selectable. A "text only"
+mode gives a smaller, re-flowed file. PDF to Word places every text block and
+image where it was on the page (frames), with an optional page background for
+drawing-heavy pages; PDF to PowerPoint keeps each page as a picture with the
+text in the notes.
+
+Honest limits: ODT/ODS/ODP conversions are the text-based kind; the AI tools
+need an endpoint you configure (nothing is sent anywhere else); OCR languages
+other than English are fetched on first use; collecting other people's
+signatures and HWP files need a server, so they are not offered.
 
 Built clean-room with the Replica skill pack as a local-first take on the
 "online PDF tools" category (recon, architecture and the feature matrix are in
@@ -92,7 +99,8 @@ node tests/e2e/run.mjs editor ai   # a subset, by step-file name
 | `src/catalog/*.js` + `src/registry.js` | every tool: name, copy, options schema, runner, grouped in 15 categories |
 | `src/render.js` | pdf.js: thumbnails, page renders, text extraction, JPEG re-encoding, scan enhancement |
 | `src/ui/` | drop zone, file list, page grid, options form, the tool page state machine; `editor.js`/`reader.js` (page canvas tools), `aiPanel.js` (AI workspace) |
-| `vendor/` | `@cantoo/pdf-lib` (read/write/encrypt/PDF-A), `pdfjs-dist` (render), `fflate` (zip), DejaVu + fontkit (Unicode text), tesseract.js + English data (OCR) |
+| `vendor/` | `@cantoo/pdf-lib` (read/write/encrypt/PDF-A), `pdfjs-dist` (render), `fflate` (zip), DejaVu + fontkit (Unicode text), tesseract.js + English data (OCR), docx-preview + jszip, ExcelJS, pptx-preview and html-to-image (exact-layout Office rendering, loaded only when used) |
+| `src/exact.js` | the exact-layout pipeline: hidden layout host, per-page raster, DOM-derived invisible text layer |
 
 Compression keeps text selectable at the Recommended and Strong levels: it
 re-encodes the JPEG images inside the file and leaves everything else alone.

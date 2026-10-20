@@ -39,12 +39,12 @@ PDF to PNG,convert,should,yes,yes,pdf-to-png
 PDF OCR (searchable text layer),convert,must,yes,yes,pdf-ocr; in-browser engine
 PDF to PDF/A,convert,should,yes,yes,pdf-to-pdfa
 PDF converter hub,convert,should,yes,yes,pdf-converter
-PDF to Word,pdf-to-office,must,yes,yes,basic: text/paragraphs
-PDF to Excel,pdf-to-office,should,yes,yes,basic: rows/columns from positions
+PDF to Word,pdf-to-office,must,yes,yes,"keep-layout mode (positioned blocks, images, optional page background) + flow mode"
+PDF to Excel,pdf-to-office,should,yes,yes,"global column detection, numeric cells"
 PDF to PPT,pdf-to-office,should,yes,yes,page image per slide + notes
-Word to PDF,office-to-pdf,must,yes,yes,basic fidelity
-Excel to PDF,office-to-pdf,should,yes,yes,tables per sheet
-PPT to PDF,office-to-pdf,should,yes,yes,slide text + pictures
+Word to PDF,office-to-pdf,must,yes,yes,exact layout via in-browser layout engine + text layer; text-only mode too
+Excel to PDF,office-to-pdf,should,yes,yes,"exact layout: styles, fills, borders, merges; paginated"
+PPT to PDF,office-to-pdf,should,yes,yes,exact layout: one rasterized slide per page
 ODT to PDF,openoffice-to-pdf,could,yes,yes,
 ODS to PDF,openoffice-to-pdf,could,yes,yes,
 ODP to PDF,openoffice-to-pdf,could,yes,yes,
