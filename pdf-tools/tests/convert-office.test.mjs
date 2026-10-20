@@ -6,7 +6,7 @@ import { zipFiles, unzip, utf8 } from "../src/zip.js";
 import { parseXml, find, findAll, textOf, attr, docxToBlocks, docxToPdf, xlsxToSheets, xlsxToPdf, pptxToSlides, pptxToPdf, colIndex } from "../src/tools/office.js";
 import { odtToBlocks, odtToPdf, odsToSheets, odsToPdf, odpToSlides, odpToPdf } from "../src/tools/odf.js";
 import { epubToBlocks, epubToPdf, pagesToPdf } from "../src/tools/ebook.js";
-import { buildDocx, buildXlsx, buildPptx, pdfToDocx, pdfToXlsx, pdfToPptx, paragraphsOf, cellsOf, colLetter } from "../src/tools/officeOut.js";
+import { buildDocx, buildDocxExact, buildXlsx, buildPptx, pdfToDocx, pdfToXlsx, pdfToPptx, paragraphsOf, cellsOf, colLetter, twips, emu, fontFamilyOf, frameTopOf, alignOf, blocksOf, frameXml, wantsBackground, parseNumber, columnBoundaries, tableOf } from "../src/tools/officeOut.js";
 
 const enc = (s) => new TextEncoder().encode(s);
 const zip = (map) => zipFiles(Object.entries(map).map(([name, data]) => ({ name, data: typeof data === "string" ? enc(data) : data })));
@@ -235,7 +235,7 @@ test("paragraphsOf merges lines by gap and detects headings", () => {
 
 test("pdf to docx: valid package with headings, paragraphs and page breaks", async () => {
   const f = await makePdf(2);
-  const r = await pdfToDocx([f], {}, fakeCtx);
+  const r = await pdfToDocx([f], { layout: "flow" }, fakeCtx);
   assert.equal(r.kind, "docx");
   assert.ok(r.mime.includes("wordprocessingml"));
   const files = unzip(r.bytes);
@@ -281,4 +281,206 @@ test("buildDocx/buildXlsx/buildPptx escape XML special characters", () => {
   assert.ok(utf8(x["xl/worksheets/sheet1.xml"]).includes("&lt;x&gt;"));
   const p = unzip(buildPptx([{ image: TINY_JPEG, width: 4, height: 3, notes: "<n>" }]));
   assert.ok(utf8(p["ppt/notesSlides/notesSlide1.xml"]).includes("&lt;n&gt;"));
+});
+
+// ------------------------------------------------ PDF -> Word, exact layout ----
+test("twips/emu maths and font family mapping", () => {
+  assert.equal(twips(72), 1440);
+  assert.equal(emu(1), 12700);
+  assert.equal(fontFamilyOf("TimesNewRomanPSMT"), "Times New Roman");
+  assert.equal(fontFamilyOf("g_d0_f1"), "Arial");
+  assert.equal(fontFamilyOf("CourierNew-Bold"), "Courier New");
+  assert.equal(fontFamilyOf("DejaVuSans"), "Arial");
+  // the frame top sits one ascent above the first baseline, plus half the extra leading
+  assert.ok(Math.abs(frameTopOf(100, 10, 11.5) - 92) < 0.01);
+  assert.ok(Math.abs(frameTopOf(100, 10, 15.5) - 90) < 0.01);
+});
+
+test("blocksOf groups regularly spaced lines of one style and keeps others apart", () => {
+  const blocks = blocksOf(fakePages[0]);
+  const texts = blocks.map((b) => b.lines);
+  assert.deepEqual(texts[0], ["Big Title"]);
+  assert.deepEqual(texts[1], ["First line of a paragraph", "that continues here."]);
+  assert.deepEqual(texts[2], ["Second paragraph."]);
+  assert.equal(blocks[0].bold, true);
+  assert.equal(blocks[1].size, 11);
+  assert.ok(Math.abs(blocks[1].gap - 14) < 0.01);
+  assert.equal(blocks[1].height, 28);
+  assert.equal(blocks[1].x, 50);
+  // table cells sit far apart on one baseline: each column is its own block (Name/Apple, Qty/3)
+  const cols = blocks.filter((b) => b.lines.includes("Name") || b.lines.includes("Qty"));
+  assert.equal(cols.length, 2);
+  assert.deepEqual(blocks.find((b) => b.lines.includes("Qty")).lines, ["Qty"]);
+  assert.deepEqual(blocks.find((b) => b.lines.includes("Apple")).lines, ["Apple"]);
+});
+
+test("blocksOf keeps two side-by-side columns as separate blocks", () => {
+  const items = [];
+  for (let i = 0; i < 4; i++) {
+    items.push(it(`Left ${i}`, 50, 100 + i * 14, 11));
+    items.push(it(`Right ${i}`, 300, 100 + i * 14, 11));
+  }
+  const blocks = blocksOf({ width: 600, height: 800, items });
+  assert.equal(blocks.length, 2);
+  assert.deepEqual(blocks[0].lines, ["Left 0", "Left 1", "Left 2", "Left 3"]);
+  assert.deepEqual(blocks[1].lines, ["Right 0", "Right 1", "Right 2", "Right 3"]);
+  assert.equal(blocks[1].x, 300);
+});
+
+test("alignOf detects centred and right-aligned blocks", () => {
+  const mk = (lines, size = 11) => ({ lines, size, x: Math.min(...lines.map((l) => l.x)), xEnd: Math.max(...lines.map((l) => l.xEnd)) });
+  assert.equal(alignOf(mk([{ x: 50, xEnd: 300 }, { x: 50, xEnd: 250 }]), 600), "left");
+  assert.equal(alignOf(mk([{ x: 100, xEnd: 300 }, { x: 150, xEnd: 250 }]), 600), "center");
+  assert.equal(alignOf(mk([{ x: 100, xEnd: 300 }, { x: 200, xEnd: 300 }]), 600), "right");
+  assert.equal(alignOf(mk([{ x: 250, xEnd: 350 }]), 600), "center");
+  assert.equal(alignOf(mk([{ x: 50, xEnd: 150 }]), 600), "left");
+});
+
+test("buildDocxExact: sections per page, positioned frames, media parts, background anchor; XML well-formed", () => {
+  const pages = [
+    { width: 600, height: 800, items: [it("Big Title", 50, 60, 24, true), it("Body line one", 50, 100, 11), it("Body line two", 50, 114, 11)], text: "" },
+    { width: 800, height: 600, items: [it("Landscape page", 40, 50, 12)], text: "" },
+  ];
+  const images = [[{ bytes: makePng(20, 10), x: 300, y: 200, w: 120, h: 60 }], []];
+  const backgrounds = [null, TINY_JPEG];
+  const { bytes, stats } = buildDocxExact(pages, { images, backgrounds });
+  assert.deepEqual(stats, { blocks: 3, images: 1, backgrounds: 1 });
+  const files = unzip(bytes);
+  const xml = utf8(files["word/document.xml"]);
+  parseXml(xml); // throws if malformed
+  parseXml(utf8(files["word/_rels/document.xml.rels"]));
+  parseXml(utf8(files["[Content_Types].xml"]));
+  // one section break paragraph + the final body sectPr, page sizes in twips, zero margins
+  assert.equal((xml.match(/<w:sectPr>/g) || []).length, 2);
+  assert.ok(xml.includes('<w:pgSz w:w="12000" w:h="16000"/>'));
+  assert.ok(xml.includes('<w:pgSz w:w="16000" w:h="12000" w:orient="landscape"/>'));
+  assert.ok(xml.includes('<w:pgMar w:top="0" w:right="0" w:bottom="0" w:left="0"'));
+  // the title frame: x = 50pt = 1000 twips; single line so gap = 1.2*size = 28.8, y = frameTopOf(60, 24, 28.8) = 40.2pt = 804 twips
+  const title = xml.match(/<w:p><w:pPr><w:framePr[^>]*w:x="1000" w:y="804"\/>.*?<\/w:p>/s);
+  assert.ok(title, "title frame missing");
+  assert.ok(title[0].includes("<w:b/>") && title[0].includes('<w:sz w:val="48"/>') && title[0].includes("Big Title"));
+  assert.ok(title[0].includes('w:hAnchor="page" w:vAnchor="page"') && title[0].includes('w:wrap="none"'));
+  // the body block: two lines joined by <w:br/>, exact line spacing of 14pt = 280 twips
+  const body = xml.match(/<w:p><w:pPr><w:framePr[^>]*\/><w:spacing w:before="0" w:after="0" w:line="280" w:lineRule="exact"\/>.*?<\/w:p>/s);
+  assert.ok(body, "body frame missing");
+  assert.ok(body[0].includes("Body line one</w:t><w:br/>") && body[0].includes("Body line two"));
+  // image frame at 300,200 sized 120x60 pt, with an inline picture and a media part + relationship
+  assert.ok(xml.includes('w:x="6000" w:y="4000"'));
+  assert.ok(xml.includes(`<wp:extent cx="${emu(120)}" cy="${emu(60)}"/>`));
+  assert.ok(files["word/media/image1.png"]);
+  const rels = utf8(files["word/_rels/document.xml.rels"]);
+  assert.ok(rels.includes('Target="media/image1.png"') && rels.includes('Target="media/image2.jpeg"'));
+  // background anchored behind the text on page 2 only
+  assert.equal((xml.match(/behindDoc="1"/g) || []).length, 1);
+  assert.ok(xml.includes(`<wp:extent cx="${emu(800)}" cy="${emu(600)}"/>`));
+  assert.ok(utf8(files["[Content_Types].xml"]).includes('Extension="jpeg"'));
+});
+
+test("frameXml clamps negative positions and escapes nothing it should not", () => {
+  const x = frameXml({ x: -5, y: -1, w: 10, h: 10, inner: "<w:r><w:t>a</w:t></w:r>", jc: "center" });
+  assert.ok(x.includes('w:x="0" w:y="0"') && x.includes('<w:jc w:val="center"/>'));
+});
+
+test("wantsBackground: never with raster images; auto for near-empty or vector-heavy pages", () => {
+  const imgs = Object.assign([], { vectorOps: 500 });
+  const withImg = Object.assign([{}], { vectorOps: 500 });
+  assert.equal(wantsBackground(fakePages[0], withImg, "auto"), false);
+  assert.equal(wantsBackground(fakePages[0], imgs, "auto"), true);
+  assert.equal(wantsBackground(fakePages[0], Object.assign([], { vectorOps: 3 }), "auto"), false);
+  assert.equal(wantsBackground(fakePages[1], Object.assign([], { vectorOps: 0 }), "auto"), true);
+  assert.equal(wantsBackground(fakePages[0], withImg, "always"), true);
+  assert.equal(wantsBackground(fakePages[1], [], "never"), false);
+});
+
+test("pdfToDocx exact mode uses pageImages and renderPage hooks; flow mode still works", async () => {
+  const f = await makePdf(2);
+  const calls = { images: 0, render: 0 };
+  const ctx = {
+    extractText: async () => fakePages,
+    pageImages: async (bytes, i) => {
+      calls.images++;
+      return Object.assign(i === 0 ? [{ bytes: makePng(4, 4), x: 10, y: 10, w: 50, h: 50 }] : [], { vectorOps: 0 });
+    },
+    renderPage: async () => {
+      calls.render++;
+      return TINY_JPEG;
+    },
+  };
+  const r = await pdfToDocx([f], {}, ctx);
+  assert.equal(r.stats.layout, "exact");
+  assert.equal(calls.images, 2);
+  assert.equal(calls.render, 1); // only the near-empty page 2 gets a background in auto mode
+  assert.equal(r.stats.images, 1);
+  assert.equal(r.stats.backgrounds, 1);
+  const always = await pdfToDocx([f], { background: "always" }, ctx);
+  assert.equal(always.stats.backgrounds, 2);
+  const noHooks = await pdfToDocx([f], {}, { extractText: async () => fakePages });
+  assert.equal(noHooks.stats.images, 0);
+  const flow = await pdfToDocx([f], { layout: "flow" }, ctx);
+  assert.equal(flow.stats.layout, "flow");
+});
+
+// ------------------------------------------------ PDF -> Excel, tables ----
+test("parseNumber handles separators, currency, percent and negatives", () => {
+  assert.equal(parseNumber("1,234.56"), 1234.56);
+  assert.equal(parseNumber("1.234,56"), 1234.56);
+  assert.equal(parseNumber("$ 1,200"), 1200);
+  assert.equal(parseNumber("€12,5"), 12.5);
+  assert.equal(parseNumber("45 %"), 45);
+  assert.equal(parseNumber("(12)"), -12);
+  assert.equal(parseNumber("-3"), -3);
+  assert.equal(parseNumber("1.234.567"), 1234567);
+  assert.equal(parseNumber("12,345"), 12345);
+  assert.equal(parseNumber("abc"), null);
+  assert.equal(parseNumber("2026-01-01"), null);
+  assert.equal(parseNumber(""), null);
+  assert.equal(parseNumber(7), 7);
+});
+
+test("columnBoundaries finds page-wide gaps shared by the rows", () => {
+  const lines = [
+    { items: [it("Item", 50, 0, 10), it("Qty", 200, 0, 10), it("Price", 300, 0, 10)] },
+    { items: [it("Apple", 50, 14, 10), it("3", 200, 14, 10), it("1.50", 300, 14, 10)] },
+    { items: [it("Banana split", 50, 28, 10), it("12", 200, 28, 10), it("0.25", 300, 28, 10)] },
+  ];
+  const b = columnBoundaries(lines);
+  assert.equal(b.length, 2);
+  assert.ok(b[0] > 110 && b[0] < 200, String(b[0]));
+  assert.ok(b[1] > 210 && b[1] < 300, String(b[1]));
+  // a gap present in only one row is not a boundary
+  const ragged = [{ items: [it("ab", 0, 0, 10), it("cd", 100, 0, 10)] }, { items: [it("a long cell spanning", 0, 14, 10)] }, { items: [it("another long spanning", 0, 28, 10)] }];
+  assert.equal(columnBoundaries(ragged).length, 0);
+});
+
+test("tableOf: header row detected, numbers parsed, prose outside the table is one cell", () => {
+  const page = {
+    width: 600,
+    height: 800,
+    items: [
+      it("Quarterly report", 50, 40, 16, true),
+      it("Item", 50, 100, 10, true), it("Qty", 200, 100, 10, true), it("Price", 300, 100, 10, true),
+      it("Apple", 50, 114, 10), it("3", 200, 114, 10), it("$1,500.00", 300, 114, 10),
+      it("Pear", 50, 128, 10), it("12", 200, 128, 10), it("25 %", 300, 128, 10),
+      it("Totals are indicative.", 50, 200, 10),
+    ],
+  };
+  const t = tableOf(page);
+  assert.deepEqual(t.rows[0], ["Quarterly report"]);
+  assert.equal(t.header, 1);
+  assert.deepEqual(t.rows[1], ["Item", "Qty", "Price"]);
+  assert.deepEqual(t.rows[2], ["Apple", "3", "$1,500.00"]);
+  assert.deepEqual(t.rows[4], ["Totals are indicative."]);
+  assert.equal(t.widths.length, 3);
+  assert.ok(t.widths[0] >= "Totals are indicative.".length);
+  const x = unzip(buildXlsx([{ name: "S", ...t }]));
+  const sheet = utf8(x["xl/worksheets/sheet1.xml"]);
+  parseXml(sheet);
+  assert.ok(sheet.includes('<c r="A2" s="1" t="inlineStr">'), sheet);
+  assert.ok(sheet.includes('<c r="C3"><v>1500</v></c>'), sheet);
+  assert.ok(sheet.includes('<c r="C4"><v>25</v></c>'), sheet);
+  assert.ok(sheet.includes('<cols><col min="1" max="1" width='));
+  const styles = utf8(x["xl/styles.xml"]);
+  assert.ok(styles.includes("<b/>"));
+  assert.ok(utf8(x["[Content_Types].xml"]).includes("/xl/styles.xml"));
+  assert.ok(utf8(x["xl/_rels/workbook.xml.rels"]).includes("styles.xml"));
 });

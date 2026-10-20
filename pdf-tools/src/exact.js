@@ -28,6 +28,13 @@ function mount() {
   return { wrap, unmount: () => wrap.remove() };
 }
 
+const RENDER_TIMEOUT_MS = 90_000;
+function withTimeout(promise, what) {
+  let t;
+  const timeout = new Promise((_, reject) => (t = setTimeout(() => reject(new ToolError(`${what} took too long to render.`, "render_timeout")), RENDER_TIMEOUT_MS)));
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
+}
+
 async function settle(root) {
   await (document.fonts?.ready || Promise.resolve());
   const imgs = [...root.querySelectorAll("img")].filter((i) => !i.complete);
@@ -127,7 +134,7 @@ export async function docxToPdf(files, o = {}, ctx = {}) {
     const styles = document.createElement("div");
     wrap.append(styles, body);
     try {
-      await renderAsync(file.bytes, body, styles, {
+      await withTimeout(renderAsync(file.bytes, body, styles, {
         inWrapper: false,
         breakPages: true,
         ignoreWidth: false,
@@ -139,7 +146,7 @@ export async function docxToPdf(files, o = {}, ctx = {}) {
         renderEndnotes: true,
         useBase64URL: true,
         experimental: true,
-      });
+      }), "The document");
     } catch (err) {
       throw new ToolError(`${file.name} could not be rendered: ${String(err?.message || err).slice(0, 120)}`, "render_failed");
     }
@@ -331,7 +338,7 @@ export async function pptxToPdf(files, o = {}, ctx = {}) {
     };
     window.addEventListener("unhandledrejection", swallow);
     try {
-      await previewer.preview(file.bytes.buffer.slice(file.bytes.byteOffset, file.bytes.byteOffset + file.bytes.byteLength));
+      await withTimeout(previewer.preview(file.bytes.buffer.slice(file.bytes.byteOffset, file.bytes.byteOffset + file.bytes.byteLength)), "The presentation");
       await settle(container);
     } catch (err) {
       throw new ToolError(`${file.name} could not be rendered: ${String(err?.message || err).slice(0, 120)}`, "render_failed");
