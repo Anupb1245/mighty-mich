@@ -1,12 +1,37 @@
 # Inkfold
 
-PDF tools that never leave your device. Merge, split, organize, rotate, delete
-and extract pages, compress, JPG ⇄ PDF, number pages, watermark, protect,
-unlock and flatten. Everything runs in the browser with the PDF engine it
-already has. No upload, no account, no daily limit, no subscription.
+PDF tools that never leave your device. Forty-nine of them, covering the whole
+classic PDF-suite menu, and every one runs in the browser with the PDF engine
+it already has. No upload, no account, no daily limit, no subscription.
+
+| Category | Tools |
+| --- | --- |
+| Compress | Compress PDF (lossless, image downsampling that keeps text selectable, or full rasterize) |
+| Convert | PDF Converter hub, PDF to PDF/A, PDF OCR (in-browser engine, English offline) |
+| PDF to Image | PDF to JPG, PDF to PNG |
+| Image to PDF | JPG to PDF (JPG, PNG, WebP, GIF, BMP) |
+| PDF to Office | PDF to Word, PDF to Excel, PDF to PowerPoint |
+| Office to PDF | Word, Excel, PowerPoint to PDF |
+| OpenOffice to PDF | ODT, ODS, ODP to PDF |
+| Convert to PDF | EPUB, TXT, CSV, RTF, HTML, ZIP to PDF |
+| iWork to PDF | Pages to PDF (from the preview inside the .pages bundle) |
+| Organize | Merge, Split, Organize, Rotate, Delete pages, Extract pages |
+| Edit | Edit PDF, PDF Annotator, Number pages, Watermark, Crop, Redact (content really removed), PDF Reader, Share |
+| Fill & Sign | Sign PDF (draw, type, upload), PDF Form Filler, Request Signatures (explains why that needs a server) |
+| Protect | Protect (AES-256), Unlock, Flatten |
+| AI PDF | AI Assistant, Chat with PDF, Summarizer, Translate PDF, Question Generator, on an OpenAI-compatible endpoint you choose |
+| Scan | PDF Scanner (camera capture with document enhancement) |
+
+Honest limits: Office conversions are rebuilt from text, tables and images,
+so simple documents come out well and heavy layouts lose polish; PDF to Office
+is text-only; the AI tools need an endpoint you configure (nothing is sent
+anywhere else); OCR languages other than English are fetched on first use;
+collecting other people's signatures and HWP files need a server, so they are
+not offered.
 
 Built clean-room with the Replica skill pack as a local-first take on the
-"online PDF tools" category (recon and architecture notes in `replica/`).
+"online PDF tools" category (recon, architecture and the feature matrix are in
+`replica/`; parity against the reference menu scores 98/100).
 
 ## Run it
 
@@ -30,30 +55,44 @@ One-time setup, in the repository on GitHub:
    Pages → Run workflow** and pick the branch.
 
 The site then lives at `https://<user>.github.io/<repo>/`. Every link in the
-site is relative, so it works under that sub-path. On Pages the tool URLs are
-`tool.html?tool=merge-pdf`; the clean `/merge-pdf` form needs a host with
-rewrites (Netlify `_redirects`, Vercel `vercel.json`, both included).
+site is relative, so it works under that sub-path. Clean tool URLs such as
+`/merge-pdf` work there too: Pages serves `404.html` for unknown paths and that
+page redirects to the tool.
 
 ## Host it anywhere else
 
-`npm run build` writes `dist/`: upload that folder to any static host.
+`npm run build` writes `dist/`: upload that folder to any static host. The
+build also generates `_redirects` (Netlify), `vercel.json` (Vercel, with a
+CSP), `robots.txt` and, when `SITE_URL=https://your.domain` is set, a
+`sitemap.xml`, all from the tool catalog.
+
+### Custom domain
+
+- GitHub Pages: **Settings → Pages → Custom domain**, then at your registrar add
+  a `CNAME` record from `www` (or your subdomain) to `<user>.github.io`, or for
+  an apex domain the four `A` records GitHub lists (185.199.108.153,
+  185.199.109.153, 185.199.110.153, 185.199.111.153). Tick "Enforce HTTPS" once
+  the certificate is issued.
+- Netlify / Vercel: add the domain in the dashboard and follow the DNS records
+  it shows.
 
 ## Test it
 
 ```bash
-npm test           # unit tests for every tool, pure Node, no browser
-npm run test:e2e   # real Chromium through every flow (needs a Chromium binary; see tests/e2e/run.mjs)
+npm test           # 73 unit tests over the pure tool functions, Node only
+npm run test:e2e   # 43 Chromium steps through every tool's real UI (needs a Chromium binary; see tests/e2e/run.mjs)
+node tests/e2e/run.mjs editor ai   # a subset, by step-file name
 ```
 
 ## How it is built
 
 | piece | what |
 | --- | --- |
-| `src/tools/*.js` | pure functions, bytes in, bytes out. Testable in Node. |
-| `src/registry.js` | every tool: name, copy, options schema, runner |
-| `src/render.js` | pdf.js: thumbnails, page renders, JPEG re-encoding |
-| `src/ui/` | drop zone, file list, page grid, options form, the tool page state machine |
-| `vendor/` | `@cantoo/pdf-lib` (read/write/encrypt), `pdfjs-dist` (render), `fflate` (zip) |
+| `src/tools/*.js` | pure functions, bytes in, bytes out. Testable in Node. Office/ODF/EPUB parsing and writing is hand-written XML. |
+| `src/catalog/*.js` + `src/registry.js` | every tool: name, copy, options schema, runner, grouped in 15 categories |
+| `src/render.js` | pdf.js: thumbnails, page renders, text extraction, JPEG re-encoding, scan enhancement |
+| `src/ui/` | drop zone, file list, page grid, options form, the tool page state machine; `editor.js`/`reader.js` (page canvas tools), `aiPanel.js` (AI workspace) |
+| `vendor/` | `@cantoo/pdf-lib` (read/write/encrypt/PDF-A), `pdfjs-dist` (render), `fflate` (zip), DejaVu + fontkit (Unicode text), tesseract.js + English data (OCR) |
 
 Compression keeps text selectable at the Recommended and Strong levels: it
 re-encodes the JPEG images inside the file and leaves everything else alone.

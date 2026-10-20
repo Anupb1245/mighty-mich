@@ -1,4 +1,4 @@
-import { zipSync } from "../vendor/fflate.js";
+import { zipSync, unzipSync, strFromU8 } from "../vendor/fflate.js";
 
 /** zipFiles([{ name, data: Uint8Array }]) -> Uint8Array. PDFs and JPEGs are already compressed, so store them. */
 export function zipFiles(entries, { level = 0 } = {}) {
@@ -12,4 +12,13 @@ export function zipFiles(entries, { level = 0 } = {}) {
     map[n] = [data, { level }];
   }
   return zipSync(map);
+}
+
+/** unzip(bytes) -> { [path]: Uint8Array } */
+export function unzip(bytes) {
+  return unzipSync(bytes);
+}
+
+export function utf8(bytes) {
+  return strFromU8(bytes);
 }
