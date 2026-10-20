@@ -18,8 +18,13 @@
     "@pdf-lib/fontkit": "^1.1.1",
     "@tesseract.js-data/eng": "^1.0.0",
     "dejavu-fonts-ttf": "^2.37.3",
+    "docx-preview": "^0.4.1",
+    "exceljs": "^4.4.0",
     "fflate": "^0.8.2",
+    "html-to-image": "^1.11.13",
+    "jszip": "^3.10.2",
     "pdfjs-dist": "^4.10.38",
+    "pptx-preview": "^1.0.7",
     "tesseract.js": "^7.0.0",
     "tesseract.js-core": "^7.0.0"
   },
